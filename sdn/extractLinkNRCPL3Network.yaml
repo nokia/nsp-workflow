@@ -1,0 +1,51 @@
+---
+version: '2.0'
+
+extractLinkNRCPL3Network:
+  description: |
+    extracts Links matching termination Points interface IP from NRCPs L3 Network. |
+    Usage - pass in response of /sdn/api/v4/nsp/net/l3/networks and Interface IP desired.
+
+  tags:
+    - Author-mohammad.s.khan@nokia.com
+    
+    
+  input:
+    - network
+    - interfaceIP
+    
+  output:
+    uuid: <% $.extract %>
+
+  tasks:
+    extractNodeNetwork:
+      action: std.js
+      input:
+        context: <% $ %>
+        script: |
+          var netw = $.network
+          var interfaceIP = $.interfaceIP
+          var data = {}
+          var foundTp = "None"
+          var foundLink = "None"
+          Object.keys(netw).forEach(function(topo){
+              Object.keys(netw[topo].node).forEach(function(ne){
+                  Object.keys(netw[topo].node[ne].terminationPoint).forEach(function(tp){
+                      if(netw[topo].node[ne].terminationPoint[tp].nspTerminationPoint.terminationPointState.terminationPointParams.tpId != null && netw[topo].node[ne].terminationPoint[tp].nspTerminationPoint.terminationPointState.terminationPointParams.tpId.ipAddress.ipv4Address.string == interfaceIP){
+                          foundTp = tp
+                      }
+                  
+                  });
+              });
+              if(foundTp != "None"){
+                  Object.keys(netw[topo].link).forEach(function(ipLink){
+                      if(netw[topo].link[ipLink].source.sourceTp == foundTp || netw[topo].link[ipLink].destination.destTp == foundTp){
+                          foundLink = ipLink
+                      }
+                  });
+              }
+          });
+          data = {"foundTp": foundTp, "foundLink": foundLink}
+          return data
+      publish:
+        extract: <% task().result %>
