@@ -1,4 +1,5 @@
-## NSP Workflow Blueprints
+![NOKIA](https://raw.githubusercontent.com/nokia/nsp-workflow/master/logo.png)
+## NSP Workflow Manager Blueprints
 Copyright (c) 2019, Nokia
 All rights reserved.
 
@@ -38,5 +39,4 @@ of new workflows can be purchased at NOKIA. For any interest according the
 NOKIA professional services portfolio, please contact your local NOKIA
 sales team.
 
-**Copyright (c) 2019**
-![NOKIA](https://raw.githubusercontent.com/nokia/nsp-workflow/master/logo.png)
+**Copyright (c) 2019, NOKIA**

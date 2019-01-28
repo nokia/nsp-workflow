@@ -1,19 +1,19 @@
 ---
 version: '2.0'
 
-extractLinkNRCPL3Network:
+extractLinkL3Network:
   description: |
     extracts Links matching termination Points interface IP from NRCPs L3 Network. |
     Usage - pass in response of /sdn/api/v4/nsp/net/l3/networks and Interface IP desired.
 
   tags:
     - Author-mohammad.s.khan@nokia.com
-    
-    
+
+
   input:
     - network
     - interfaceIP
-    
+
   output:
     uuid: <% $.extract %>
 
@@ -34,7 +34,7 @@ extractLinkNRCPL3Network:
                       if(netw[topo].node[ne].terminationPoint[tp].nspTerminationPoint.terminationPointState.terminationPointParams.tpId != null && netw[topo].node[ne].terminationPoint[tp].nspTerminationPoint.terminationPointState.terminationPointParams.tpId.ipAddress.ipv4Address.string == interfaceIP){
                           foundTp = tp
                       }
-                  
+
                   });
               });
               if(foundTp != "None"){

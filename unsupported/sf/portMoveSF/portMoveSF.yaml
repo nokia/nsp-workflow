@@ -1,6 +1,6 @@
 version: '2.0'
 
-SfPortMove:
+portMoveSF:
   description: Use SF to move all services from port 1 to port 2
   type: direct
 
@@ -32,7 +32,7 @@ SfPortMove:
         token: <% task().result.content.access_token %>
       on-success:
         - getNeNetwork
- 
+
 
     getNeNetwork:
       action: std.http
@@ -51,7 +51,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-      
+
     extractNode1Uuid:
       action: std.js
       input:
@@ -72,7 +72,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     extractNode2Uuid:
       action: std.js
       input:
@@ -93,7 +93,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     getNe1Ports:
       action: std.http
       input:
@@ -111,7 +111,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     getNe2Ports:
       action: std.http
       input:
@@ -129,8 +129,8 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
-        
+
+
     extractNe1PortUuid:
       action: std.js
       input:
@@ -141,7 +141,7 @@ SfPortMove:
           var needle = "Port " + "<% $.ne1port %>" + "$";
           needle = needle.replace(/\//g, '\/');
           var re = new RegExp(needle);
-          
+
           ports.content.response.data.forEach(function(port) {
             if (port.neId === "<% $.ne1Uuid %>" ) {
               if (port.portCapability.eline || port.portCapability.elan || port.portCapability.l3vpn || port.portCapability.ies) {
@@ -160,7 +160,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     extractNe2PortUuid:
       action: std.js
       input:
@@ -171,7 +171,7 @@ SfPortMove:
           var needle = "Port " + "<% $.ne2port %>" + "$";
           needle = needle.replace(/\//g, '\/');
           var re = new RegExp(needle);
-          
+
           ports.content.response.data.forEach(function(port) {
             if (port.neId === "<% $.ne2Uuid %>" ) {
               if (port.portCapability.eline || port.portCapability.elan || port.portCapability.l3vpn || port.portCapability.ies) {
@@ -191,8 +191,8 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
-        
+
+
     getSfServices:
       action: std.http
       input:
@@ -210,7 +210,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     extractServicesForNode:
       action: std.js
       input:
@@ -222,7 +222,7 @@ SfPortMove:
           var elans  = [];
           var l3vpns = [];
           var ieses  = [];
-          myServices.content.response.data.forEach(function(service) {   
+          myServices.content.response.data.forEach(function(service) {
            var eline = {};
            service.endpoints.forEach(function(ep) {
              if (ep.neId === "<% $.ne1Uuid %>") {
@@ -234,7 +234,7 @@ SfPortMove:
                    eline["ep1"]                 = ep;
                  } else if (service.serviceType === "ELAN") {
                    elans.push({
-                    "serviceId": ep.serviceId, 
+                    "serviceId": ep.serviceId,
                     "serviceType": service.serviceType,
                     "ep": ep
                     });
@@ -242,7 +242,7 @@ SfPortMove:
                    var oIsHub = "false"
                    if (ep.isHub) {oIsHub = "true"}
                    l3vpns.push({
-                    "serviceId": ep.serviceId, 
+                    "serviceId": ep.serviceId,
                     "serviceType": service.serviceType,
                     "ep": ep
                    });
@@ -250,10 +250,10 @@ SfPortMove:
                    var oIsHub = "false"
                    if (ep.isHub) {oIsHub = "true"}
                    ieses.push({
-                    "serviceId": ep.serviceId, 
+                    "serviceId": ep.serviceId,
                     "serviceType": service.serviceType,
                     "ep": ep
-                   }); 
+                   });
                  }
                }
              }  else {
@@ -272,7 +272,7 @@ SfPortMove:
           list.push(ieses);
           return list;
       publish:
-        nodeServices: <% task(extractServicesForNode).result %>   
+        nodeServices: <% task(extractServicesForNode).result %>
         sfServices: null
       on-success:
         - moveElineServices
@@ -282,8 +282,8 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-    
-        
+
+
     moveElineServices:
       action: std.echo output="<% $.nodeServices[0] %>"
       publish:
@@ -293,7 +293,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     deleteElineService:
       with-items: eline in <% $.nodeServices[0] %>
       action: std.http
@@ -311,7 +311,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     createElineService:
       with-items: eline in <% $.nodeServices[0] %>
       action: std.http
@@ -331,7 +331,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     moveElanServices:
       action: std.echo output="<% $.nodeServices[1] %>"
       publish:
@@ -340,8 +340,8 @@ SfPortMove:
         - deleteElanPorts
       on-error:
         - revoke_token
-        - actionFailed  
-        
+        - actionFailed
+
     deleteElanPorts:
       with-items: elan in <% $.nodeServices[1] %>
       action: std.http
@@ -359,7 +359,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-    
+
     createElanPorts:
       with-items: elan in <% $.nodeServices[1] %>
       action: std.http
@@ -379,7 +379,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     moveL3vpnServices:
       action: std.echo output="<% $.nodeServices[2] %>"
       publish:
@@ -389,7 +389,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     deleteL3vpnPorts:
       with-items: l3vpn in <% $.nodeServices[2] %>
       action: std.http
@@ -407,7 +407,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     createL3vpnPorts:
       with-items: l3vpn in <% $.nodeServices[2] %>
       action: std.http
@@ -427,7 +427,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     moveIesServices:
       action: std.echo output="<% $.nodeServices[3] %>"
       publish:
@@ -437,7 +437,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
+
     deleteIesPorts:
       with-items: ies in <% $.nodeServices[3] %>
       action: std.http
@@ -455,8 +455,8 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-        
-        
+
+
     createIesPorts:
       with-items: ies in <% $.nodeServices[3] %>
       action: std.http
@@ -476,7 +476,7 @@ SfPortMove:
       on-error:
         - revoke_token
         - actionFailed
-            
+
     waitForAllServices:
       join: 4
       action: std.echo output="ALL THREADS COMPLETED"
@@ -485,7 +485,7 @@ SfPortMove:
         nodeServices: null
       on-complete:
         - revoke_token
-        
+
     revoke_token:
       action: std.http
       input:
@@ -496,11 +496,8 @@ SfPortMove:
           Content-Type: 'application/x-www-form-urlencoded'
           Authorization: 'Basic <% $.token_auth %>'
         body:  'token=<% $.token %>&token_type_hint=token'
-        
+
     actionFailed:
       action: std.fail
       publish:
         status: Failed
-
-
-        

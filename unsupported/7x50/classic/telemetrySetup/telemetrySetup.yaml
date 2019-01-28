@@ -1,0 +1,425 @@
+version: '2.0'
+
+telemetrySetup:
+  description: 'Enable grpc on node and test telemetry'
+  tags:
+    - Blueprint
+  type: direct
+  input:
+    - token_auth: 'YWRtaW46Tm9raWFOc3AxIQ=='
+    - rest_gateway_host: '135.121.148.11'
+    - rootUser: 'root'
+    - rootPassword: 'NokNsp1!'
+    - ftpHost: '192.168.96.10'
+    - ftpUser: 'root'
+    - ftpPassword: 'NokNsp1!'
+    - neIp: '192.168.96.44'
+    - neName: 's168_96_44_Both'
+    - neUser: 'admin'
+    - nePassword: 'admin'
+    - cfLoc: 'cf3'
+
+  tasks:
+    checkCaCertificates:
+      action: std.ssh
+      input:
+        host: '<% $.rest_gateway_host %>'
+        username: '<% $.rootUser %>'
+        password: '<% $.rootPassword %>'
+        cmd: |
+          keytool -list -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass 'NokiaNsp1!'
+
+      publish:
+        fileResult: <% task().result %>
+      on-error:
+        - generateCaCertificates
+      on-success:
+        - replaceUnderscore
+
+
+    generateCaCertificates:
+      action: std.ssh
+      input:
+        host: '<% $.rest_gateway_host %>'
+        username: '<% $.rootUser %>'
+        password: '<% $.rootPassword %>'
+        cmd: |
+          mkdir /opt/nsp/os/ssl/certs/telemetry
+          cd /opt/nsp/os/ssl/certs/telemetry
+          mkdir private
+          openssl genrsa -out private/CAkey.pem 2048
+          openssl req -out CAreq.pem -key private/CAkey.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=NSP Development Root CA/emailAddress=nobody@nokia.com"
+          touch /etc/pki/CA/index.txt
+          openssl ca -out CAcert.pem -keyfile private/CAkey.pem -batch -days 3650 -selfsign -create_serial -passin "pass:" -extensions v3_ca -infiles CAreq.pem
+          echo 01 > /etc/pki/CA/crlnumber
+          openssl ca -out CAcrl.pem -keyfile private/CAkey.pem -batch -gencrl -cert CAcert.pem -passin "pass:"
+          openssl genrsa -out private/key.pem 2048
+          openssl x509 -outform der -in CAcert.pem -out CAcert.der
+          unalias cp
+          cp -f /opt/nsp/os/ssl/nsp.truststore /opt/nsp/os/ssl/nsp.truststore.bak
+          echo -e "y" | keytool -import -alias myTelemetryCa -keystore /opt/nsp/os/ssl/nsp.truststore -file /opt/nsp/os/ssl/certs/telemetry/CAcert.der -storepass "NokiaNsp1!"
+
+      publish:
+        fileResult: <% task().result %>
+      on-error:
+        - actionFailed
+      on-success:
+        - replaceUnderscore
+
+    replaceUnderscore:
+      publish:
+        nodeUnder: <% $.neIp.replace(".","_") %>
+      on-complete:
+        - generateGrpcCertificate
+
+    generateGrpcCertificate:
+      action: std.ssh
+      input:
+        host: '<% $.rest_gateway_host %>'
+        username: '<% $.rootUser %>'
+        password: '<% $.rootPassword %>'
+        cmd: |
+          sed -i '/CN=<% $.neName %>/d' /etc/pki/CA/index.txt
+          cd /opt/nsp/os/ssl/certs/telemetry
+          openssl genrsa -out private/<% $.nodeUnder %>_key.pem 2048
+          openssl req -out <% $.nodeUnder %>_certreq.pem -key private/<% $.nodeUnder %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.neName %>/emailAddress=nobody@nokia.com"
+          openssl ca -out <% $.nodeUnder %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.neIp %>") -infiles <% $.nodeUnder %>_certreq.pem
+
+      publish:
+        fileResult: <% task().result %>
+      on-success:
+        - copyCertsToNode1
+      on-error:
+        - actionFailed
+
+    copyCertsToNode1:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.neIp %>'
+        username: '<% $.neUser %>'
+        password: '<% $.nePassword %>'
+        cmd: |
+          file copy ftp://<% $.ftpUser %>:<% $.ftpPassword %>@<% $.ftpHost %>/opt/nsp/os/ssl/certs/telemetry/<% $.nodeUnder %>_cert.pem <% $.cfLoc %>:/ force
+          sleep 1
+
+      publish:
+        fileResult1: <% task().result %>
+      on-success:
+        - copyCertsToNode2: <% $.fileResult1.values().flatten().indexOf("1 file copied.") = 2 %>
+        - actionFailed: <% $.fileResult1.values().flatten().indexOf("1 file copied.") != 2 %>
+      on-error:
+        - actionFailed
+      retry:
+        count: 3
+        delay: 10
+        break-on: <% $.fileResult1.values().flatten().indexOf("1 file copied.") = 2 %>
+        continue-on: <% $.fileResult1.values().flatten().indexOf("1 file copied.") != 2 %>
+
+    copyCertsToNode2:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.neIp %>'
+        username: '<% $.neUser %>'
+        password: '<% $.nePassword %>'
+        cmd: |
+          file copy ftp://<% $.ftpUser %>:<% $.ftpPassword %>@<% $.ftpHost %>/opt/nsp/os/ssl/certs/telemetry/private/<% $.nodeUnder %>_key.pem <% $.cfLoc %>:/ force
+          sleep 1
+
+      publish:
+        fileResult2: <% task().result %>
+      on-success:
+        - copyCertsToNode3: <% $.fileResult2.values().flatten().indexOf("1 file copied.") = 2 %>
+        - actionFailed: <% $.fileResult2.values().flatten().indexOf("1 file copied.") != 2 %>
+      on-error:
+        - actionFailed
+      retry:
+        count: 3
+        delay: 10
+        break-on: <% $.fileResult2.values().flatten().indexOf("1 file copied.") = 2 %>
+        continue-on: <% $.fileResult2.values().flatten().indexOf("1 file copied.") != 2 %>
+
+    copyCertsToNode3:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.neIp %>'
+        username: '<% $.neUser %>'
+        password: '<% $.nePassword %>'
+        cmd: |
+          file copy ftp://<% $.ftpUser %>:<% $.ftpPassword %>@<% $.ftpHost %>/opt/nsp/os/ssl/certs/telemetry/CAcert.pem <% $.cfLoc %>:/ force
+          sleep 1
+
+      publish:
+        fileResult3: <% task().result %>
+      on-success:
+        - copyCertsToNode4: <% $.fileResult3.values().flatten().indexOf("1 file copied.") = 2 %>
+        - actionFailed: <% $.fileResult3.values().flatten().indexOf("1 file copied.") != 2 %>
+      on-error:
+        - actionFailed
+      retry:
+        count: 3
+        delay: 10
+        break-on: <% $.fileResult3.values().flatten().indexOf("1 file copied.") = 2 %>
+        continue-on: <% $.fileResult3.values().flatten().indexOf("1 file copied.") != 2 %>
+
+    copyCertsToNode4:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.neIp %>'
+        username: '<% $.neUser %>'
+        password: '<% $.nePassword %>'
+        cmd: |
+          file copy ftp://<% $.ftpUser %>:<% $.ftpPassword %>@<% $.ftpHost %>/opt/nsp/os/ssl/certs/telemetry/CAcrl.pem <% $.cfLoc %>:/ force
+          sleep 1
+
+      publish:
+        fileResult4: <% task().result %>
+      on-success:
+        - importKeyPairs: <% $.fileResult4.values().flatten().indexOf("1 file copied.") = 2 %>
+        - actionFailed: <% $.fileResult4.values().flatten().indexOf("1 file copied.") != 2 %>
+      on-error:
+        - actionFailed
+      retry:
+        count: 3
+        delay: 10
+        break-on: <% $.fileResult4.values().flatten().indexOf("1 file copied.") = 2 %>
+        continue-on: <% $.fileResult4.values().flatten().indexOf("1 file copied.") != 2 %>
+
+    importKeyPairs:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.neIp %>'
+        username: '<% $.neUser %>'
+        password: '<% $.nePassword %>'
+        cmd: |
+          admin certificate import type cert input <% $.cfLoc %>:/<% $.nodeUnder %>_cert.pem   output cert.crt   format pem
+          admin certificate import type key  input <% $.cfLoc %>:/<% $.nodeUnder %>_key.pem    output key.crt    format pem
+          admin certificate import type cert input <% $.cfLoc %>:/CAcert.pem output cacert.crt format pem
+          admin certificate import type crl  input <% $.cfLoc %>:/CAcrl.pem  output cacrl.crt  format pem
+          admin certificate reload type cert-key-pair cert.crt protocol tls key-file key.crt
+
+      publish:
+        testResult: <% task().result %>
+      on-success:
+        - telemCLIConfig
+      on-error:
+        - telemCLIConfig
+
+    telemCLIConfig:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.neIp %>'
+        username: '<% $.neUser %>'
+        password: '<% $.nePassword %>'
+        cmd: |
+          configure system
+          security
+          pki
+          ca-profile "tls-ca" create
+          cert-file "cacert.crt"
+          crl-file "cacrl.crt"
+          no shutdown
+          exit
+          exit
+          exit
+          exit
+          configure system
+          security
+          tls
+          cert-profile "grpc-tls-certificates" create
+          entry 1 create
+          cert "cert.crt"
+          key "key.crt"
+          exit
+          no shutdown
+          exit
+          server-cipher-list "grpc-cipher-list" create
+          cipher 1 name tls-rsa-with-null-md5
+          cipher 2 name tls-rsa-with-null-sha
+          cipher 3 name tls-rsa-with-null-sha256
+          cipher 4 name tls-rsa-with3des-ede-cbc-sha
+          cipher 5 name tls-rsa-with-aes128-cbc-sha
+          cipher 6 name tls-rsa-with-aes256-cbc-sha
+          cipher 7 name tls-rsa-with-aes128-cbc-sha256
+          cipher 8 name tls-rsa-with-aes256-cbc-sha256
+          exit
+          server-tls-profile "grpc-tls-profile" create
+          cert-profile "grpc-tls-certificates"
+          cipher-list  "grpc-cipher-list"
+          no shutdown
+          exit
+          exit
+          exit
+          exit
+          configure system
+          security
+          user "grpc"
+          password Nokia4gnmi
+          access grpc
+          console member "administrative"
+          exit
+          exit
+          grpc
+          tls-server-profile "grpc-tls-profile"
+          no shutdown
+          exit
+          exit
+
+      publish:
+        testResult: <% task().result %>
+      on-success:
+        - run_get_token
+      on-error:
+        - actionFailed
+
+    run_get_token:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>/rest-gateway/rest/api/v1/auth/token'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Basic <% $.token_auth %>'
+        body:
+          grant_type: 'client_credentials'
+      publish:
+        token: <% task().result.content.access_token %>
+      on-success:
+        - getAllNe
+
+    getAllNe:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/sdn/api/v4/ne'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+      on-success:
+        - extractNodeDetails
+      on-error:
+        - actionFailed
+        - revoke_token
+      publish:
+        neData: <% task().result.content.response.data %>
+
+    extractNodeDetails:
+      action: std.js
+      input:
+        context: <% $ %>
+        script: |
+          var data = $.neData;
+          var list = {};
+          Object.keys(data).forEach(function(node){
+            if (data[node].siteName == '<% $.neName %>') {
+              list['uuid'] = data[node].id;
+              list['siteId'] = data[node].ipAddress;
+            }
+          });
+          return list;
+      publish:
+        nodeRec: <% task().result %>
+      on-success:
+        - getAllPorts
+
+    getAllPorts:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/sdn/api/v4/ports/ne-all/<% $.nodeRec.uuid %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+      on-success:
+        - checkFirstPortExists
+      on-error:
+        - actionFailed
+        - revoke_token
+      publish:
+        nePorts: <% task().result.content.response.data %>
+
+    checkFirstPortExists:
+      action: std.js
+      input:
+        context: <% $ %>
+        script: |
+          var data = $.nePorts;
+          var portExists = false;
+          Object.keys(data).forEach(function(port){
+            if (data[port].name == 'Port 1/1/1') {
+              portExists = true;
+            }
+          });
+          return portExists;
+      publish:
+        portExists: <% task().result %>
+      on-success:
+        - triggerTelemetryOnPort: <% $.portExists != false %>
+        - actionPassed: <% $.portExists != true %>
+      on-error:
+        - actionFailed
+        - revoke_token
+
+    triggerTelemetryOnPort:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8544/nbi-notification/api/v1/notifications/subscriptions'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+        body: |
+          {"categories": [{"advancedFilter":"{\"pollingInterval\": \"10\",\"duration\": \"3600\",\"realTimeStatsAttributesDtos\":[{\"monitoredObjectFdn\":{\"realm\": \"telemetry\",\"local\": \"network[system-id=<% $.nodeRec.get('siteId') %>]:port[port-id=1/1/1]\"}, \"realTimeStatsAttributeDto\": [{\"kpiType\": \"/state/port[port-id]/statistics\",\"propertyName\": \"in-packets\"},{\"kpiType\": \"/state/port[port-id]/statistics\",\"propertyName\": \"out-packets\"}]}]}","name": "NSP-REAL-TIME-KPI"}]}
+
+
+      on-success:
+        - deleteSubscription
+      on-error:
+        - revoke_token
+      publish:
+        subscriptionId: <% task().result.content.response.data.subscriptionId %>
+
+    deleteSubscription:
+      action: std.http
+      wait-before: 120
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8544/nbi-notification/api/v1/notifications/subscriptions/<% $.subscriptionId %>'
+        method: DELETE
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+      on-success:
+        - actionPassed
+        - revoke_token
+
+
+    revoke_token:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>/rest-gateway/rest/api/v1/auth/revocation'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/x-www-form-urlencoded'
+          Authorization: 'Basic <% $.token_auth %>'
+        body:  'token=<% $.token %>&token_type_hint=token'
+
+
+    actionPassed:
+      publish:
+        status: "complete"
+        nePorts: ""
+        neData: ""
+        testResult: ""
+        fileResult1: ""
+        fileResult2: ""
+        fileResult3: ""
+        fileResult4: ""
+
+
+    actionFailed:
+      action: std.fail

@@ -1,0 +1,112 @@
+version: '2.0'
+
+cleanupExecutions:
+  description: 'Delete Workflow Executions for house-keeping'
+  type: direct
+
+  tags:
+    - Blueprint
+
+  input:
+    - token_auth: 'YWRtaW46Tm9raWFOc3AxIQ=='
+    - rest_gateway_host: '135.86.160.116'
+    - fromDate: '2018-11-12%2021:10:03'
+    - workFlowName: 'rPLM_zeroTouchVPN'
+    - function: 'part'
+
+
+
+  tasks:
+    run_get_token:
+      action: nsp.access.token rest_gateway_host='<% $.rest_gateway_host %>' token_auth='<% $.token_auth %>'
+      publish:
+        token: <% task().result %>
+      on-success:
+        - choice
+
+    choice:
+      action: std.javascript
+      input:
+        script: |
+          function pathToTake() {
+          var func = "<% $.function %>";
+          var returnValue;
+          if (func == "partial"){
+          returnValue = "part";
+          }else{
+          returnValue = "full";
+          }
+          return returnValue;
+          }
+          return pathToTake();
+      publish:
+          path: <% task().result %>
+      on-success:
+        - currentTime: <% $.path = 'full' %>
+        - getErroredRuns: <% $.path = 'part' %>
+
+
+    currentTime:
+      action: std.javascript
+      input:
+        script: |
+          function myFunction(){
+          var a = new Date();
+          return a;
+          }
+          return myFunction();
+      publish:
+        timeNow: <% task(currentTime).result %>
+      on-success:
+        - getAllRuns
+
+    getAllRuns:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution?workflow_name=<% $.workFlowName %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+      publish:
+        erroredId:  <% task().result.content.response.data.id %>
+      on-success:
+       - deleteExecutions
+
+
+    getErroredRuns:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution?created_at=lt:<% $.fromDate %>&workflow_name=<% $.workFlowName %>&state=ERROR'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+      publish:
+        erroredId:  <% task().result.content.response.data.id %>
+      on-success:
+       - deleteExecutions
+
+    deleteExecutions:
+      with-items: id in <% $.erroredId %>
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution/<% $.id %>'
+        method: DELETE
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+
+      publish:
+        resultTest: <% task().result %>
+      on-success:
+        - revoke_token
+
+
+    revoke_token:
+      action: nsp.revoke.token rest_gateway_host='<% $.rest_gateway_host %>' token_auth='<% $.token_auth %>' token='<% $.token %>'
+      publish:
+        result: <% task().result %>
