@@ -1,23 +1,36 @@
-# Setup Telemetry Workflow Blueprint
+![NOKIA](https://raw.githubusercontent.com/nokia/nsp-workflow/master/logo.png)
+# Nokia NSP Workflow Manager Blueprints
+## 7x50 Setup Telemetry
 
-Nokia NSP Workflow Manager Blueprint - Setup Telemetry Workflow
+### Description
+This workflow will generate all the certificates required to enable the
+telemetry API (using gRPC over TLS) on a Nokia SR OS device. The certificates
+will be copied to the node along along the necessary configuration to enable
+gNMI. If the node has physical port 1/1/1 configured, the workflow will enable
+a 2 minute collection of telemetry data.
 
-## Getting Started
+### Version
+7x50 Setup Telemetry - version 1.0
 
-This workflow will generate all the certificates required to enable gRPC telemetry collection on a Nokia SR.
-The certificates will be copied to the SR along with  all necessary configuration to enable gRPC.
-If the node has physical port 1/1/1 configured, the workflow will enable a 2 minute collection of telemetry data.
+### Support level
+Unsupported, use at your own risk!
+
+### History
+|Version|Author|Date      |Comments     |
+|-------|------|----------|-------------|
+|   1.0 |  ML  |2019-01-28|first version|
 
 ### Prerequisites
-
 Nokia NSP with Workflow Manager and Telemetry
 
-### Installing
+### Tested with
+* Nokia NSP 18.12
+* Nokia 7750SR running SR OS 16.0.R5 (CLASSIC MODE)
 
+### Installation
 Download the workflow and then use the Workflow Manager workflow Import functionality to import the workflow into your WFM instance.
 
-## Running the workflow
-
+### Usage
 The workflow can be initiated either via the WFM GUI or via the workflow management REST API
 The following parameters must be supplied
 
@@ -62,23 +75,6 @@ POST /wfm/api/v1/execution HTTP/1.1
 }
 ```
 
-
-## Deployment
-
-This is a sample workflow and should only be used for lab deployments. Additional work is required to enable the workflow to be used in a live system
-
-## Tested with
-
-* NSP 18.12
-* 7750 SR 16.0 R5
-
-## Versioning
-
-This is version 1
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-
-
+### License
+This project is licensed under the BSD-3 Clause License. See
+[LICENSE.md](https://raw.githubusercontent.com/nokia/nsp-workflow/master/LICENSE.md) file for details.
