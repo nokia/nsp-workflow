@@ -1,0 +1,78 @@
+version: '2.0'
+
+migratePbbEline:
+  description: Moves PBB ELINE from to new Backbone VPLS
+  type: direct
+
+  tags:
+    - demo
+    - IBN
+
+  input:
+    - token
+    - ibnServer
+    - ibnPortRC
+    - newBvpls
+
+  output:
+    status: <% $.status %>
+
+  tasks:
+    getToken:
+      action: std.http
+      input:
+        url: 'https://<% $.ibnServer %>:<% $.ibnPortRC %>/rest/auth/login'
+        method: POST
+        verify: False
+        headers:
+          Authorization: 'Basic <% $.token %>'
+      publish:
+        authToken: <% task().result.content.accessToken %>
+      on-success:
+        - getAllServices
+      on-error:
+        - errorOccured
+
+    getAllServices:
+      action: std.http
+      input:
+        url: 'https://<% $.ibnServer %>:<% $.ibnPortRC %>/rest/restconf/data/ibn:ibn'
+        method: GET
+        verify: False
+        headers:
+          Authorization: 'Bearer <% $.authToken %>'
+          Accept: 'application/yang-data+json'
+          Content-Type: 'application/yang-data+json'
+      publish:
+        services: <% task().result.content['ibn:ibn'].intent %>
+      on-success:
+        - migrateElines
+      on-error:
+        - errorOccured
+
+    migrateElines:
+      with-items: item in <% $.services.where($["intent-type"] = "pbb-epipe") %>
+      action: std.http
+      input:
+        url: 'https://<% $.ibnServer %>:<% $.ibnPortRC %>/rest/restconf/data/ibn:ibn/ibn:intent=<% $.item.target %>,pbb-epipe/configuration/pbb-epipe:pbb-epipe'
+        method: PUT
+        verify: False
+        headers:
+          Authorization: 'Bearer <% $.authToken %>'
+          Accept: 'application/yang-data+json'
+          Content-Type: 'application/yang-data+json'
+        body:
+          bvpls-name: <% $.newBvpls %>
+      on-success:
+        - successDone
+      on-error:
+        - errorOccured
+
+    successDone:
+      publish:
+        status: "DONE"
+
+    errorOccured:
+      action: std.fail
+      publish:
+        status: "ERROR"

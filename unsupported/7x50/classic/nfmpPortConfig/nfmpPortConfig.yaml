@@ -1,0 +1,104 @@
+version: '2.0'
+
+port_config:
+  description: Configure ports using NFM-P
+  type: direct
+  tags:
+    - demo
+    - NFM-P
+
+  input:
+    - token_auth
+    - restgateway
+    - nfmp_host
+    - selector
+    - encapType
+
+  output:
+    status: <% $.status %>
+
+  tasks:
+    getToken:
+      action: std.http
+      input:
+        url: 'https://<% $.restgateway %>/rest-gateway/rest/api/v1/auth/token'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Basic <% $.token_auth %>'
+        body:
+          grant_type: 'client_credentials'
+      publish:
+        token: <% task().result.content.access_token %>
+      on-success:
+        - getAllPorts
+      on-error:
+        - errorOccured
+
+    getAllPorts:
+      action: std.http
+      input:
+        url: 'https://<% $.nfmp_host %>:8443/nfm-p/rest/api/v1/managedobjects/search'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+        body:
+          fullClassName: 'equipment.PhysicalPort'
+          simpleAttributeAndFilter:
+            description: '<% $.selector %>'
+      publish:
+        ports: <% task().result.content %>
+      on-success:
+        - modifyPorts
+      on-error:
+        - errorOccured
+
+    modifyPorts:
+      with-items: item in <% $.ports %>
+      action: std.http
+      input:
+        url: 'https://<% $.nfmp_host %>:8443/nfm-p/rest/api/v1/managedobjects/<% $.item.objectFullName %>'
+        method: PUT
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+        body:
+          fullClassName: 'equipment.PhysicalPort'
+          properties:
+            encapType: '<% $.encapType %>'
+            administrativeState: 'portInService'
+      on-success:
+        - successDone
+      on-error:
+        - undoChanges
+
+    undoChanges:
+      with-items: item in <% $.ports %>
+      action: std.http
+      input:
+        url: 'https://<% $.nfmp_host %>:8443/nfm-p/rest/api/v1/managedobjects/<% $.item.objectFullName %>'
+        method: PUT
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token %>'
+        body:
+          fullClassName: 'equipment.PhysicalPort'
+          properties:
+            encapType: '<% $.item.encapType %>'
+            administrativeState: '<% $.item.administrativeState %>'
+      on-complete:
+        - errorOccured
+
+    successDone:
+      publish:
+        status: "DONE"
+
+    errorOccured:
+      action: std.fail
+      publish:
+        status: "ERROR"
