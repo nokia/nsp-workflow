@@ -8,62 +8,71 @@ cleanupExecutions:
     - Blueprint
 
   input:
-    - token_auth: 'YWRtaW46Tm9raWFOc3AxIQ=='
-    - rest_gateway_host: '135.86.160.116'
-    - fromDate: '2018-11-12%2021:10:03'
-    - workFlowName: 'rPLM_zeroTouchVPN'
-    - function: 'part'
-
-
+    - token_auth: ''
+    - rest_gateway_host: ''
+    - fromDate: '2019-03-03%2010:00:00'
+    - byAge: 3600
+    - workFlowName: 'cleanupExecutions'
+    - workFlowState: 'ERROR'
 
   tasks:
     run_get_token:
-      action: nsp.access.token rest_gateway_host='<% $.rest_gateway_host %>' token_auth='<% $.token_auth %>'
-      publish:
-        token: <% task().result %>
-      on-success:
-        - choice
-
-    choice:
-      action: std.javascript
-      input:
-        script: |
-          function pathToTake() {
-          var func = "<% $.function %>";
-          var returnValue;
-          if (func == "partial"){
-          returnValue = "part";
-          }else{
-          returnValue = "full";
-          }
-          return returnValue;
-          }
-          return pathToTake();
-      publish:
-          path: <% task().result %>
-      on-success:
-        - currentTime: <% $.path = 'full' %>
-        - getErroredRuns: <% $.path = 'part' %>
-
-
-    currentTime:
-      action: std.javascript
-      input:
-        script: |
-          function myFunction(){
-          var a = new Date();
-          return a;
-          }
-          return myFunction();
-      publish:
-        timeNow: <% task(currentTime).result %>
-      on-success:
-        - getAllRuns
-
-    getAllRuns:
       action: std.http
       input:
-        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution?workflow_name=<% $.workFlowName %>'
+        url: 'https://<% $.rest_gateway_host %>/rest-gateway/rest/api/v1/auth/token'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Basic <% $.token_auth %>'
+        body:
+          grant_type: 'client_credentials'
+      publish:
+        token: <% task().result.content.access_token %>
+      on-success:
+        - get_filter
+
+    get_filter:
+      action: std.javascript
+      input:
+        script: |
+          function getQueryFilter() {
+          var filter = "";
+          if ("<% $.byAge %>" != '') {
+          now = new Date();
+          d = new Date(now - 1000*<% $.byAge %>);
+          filter = "?created_at=lt:"
+          filter += d.getUTCFullYear() + "-" + (d.getUTCMonth()+1) + "-" + d.getUTCDate() + "%20";
+          filter += d.getUTCHours() + ":" + d.getUTCMinutes() + ":" + d.getUTCSeconds();          
+          } else if ("<% $.fromDate %>" != '') {
+          filter = "?created_at=lt:<% $.fromDate %>";
+          }
+          if ("<% $.workFlowName %>" != '') {
+          if (filter == '') {
+          filter = "?workflow_name=<% $.workFlowName %>";
+          } else {
+          filter = filter + "&workflow_name=<% $.workFlowName %>";
+          }
+          }
+          if ("<% $.workFlowState %>" != '') {
+          if (filter == '') {
+          filter = "?state=<% $.workFlowState %>";
+          } else {
+          filter = filter + "&state=<% $.workFlowState %>";
+          }
+          }
+          return filter;
+          }
+          return getQueryFilter();
+      publish:
+          queryfilter: <% task().result %>
+      on-success:
+        - getFilteredRuns
+
+    getFilteredRuns:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution<% $.queryfilter %>'
         method: GET
         verify: False
         headers:
@@ -72,22 +81,7 @@ cleanupExecutions:
       publish:
         erroredId:  <% task().result.content.response.data.id %>
       on-success:
-       - deleteExecutions
-
-
-    getErroredRuns:
-      action: std.http
-      input:
-        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution?created_at=lt:<% $.fromDate %>&workflow_name=<% $.workFlowName %>&state=ERROR'
-        method: GET
-        verify: False
-        headers:
-          Content-Type: 'application/json'
-          Authorization: 'Bearer <% $.token %>'
-      publish:
-        erroredId:  <% task().result.content.response.data.id %>
-      on-success:
-       - deleteExecutions
+       - deleteExecutions    
 
     deleteExecutions:
       with-items: id in <% $.erroredId %>
@@ -105,8 +99,16 @@ cleanupExecutions:
       on-success:
         - revoke_token
 
-
     revoke_token:
-      action: nsp.revoke.token rest_gateway_host='<% $.rest_gateway_host %>' token_auth='<% $.token_auth %>' token='<% $.token %>'
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>/rest-gateway/rest/api/v1/auth/revocation'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/x-www-form-urlencoded'
+          Authorization: 'Basic <% $.token_auth %>'
+        body:  'token=<% $.token %>&token_type_hint=token'
       publish:
         result: <% task().result %>
+
