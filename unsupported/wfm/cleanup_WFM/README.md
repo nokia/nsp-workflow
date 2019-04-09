@@ -23,7 +23,7 @@ Unsupported, use at your own risk!
 Nokia NSP with Workflow Manager
 
 ### Tested with
-* Nokia NSP 18.12
+* Nokia NSP 19.3
 
 ### Installation
 Download the workflow and then use the Workflow Manager workflow Import functionality to import the workflow into your WFM instance.

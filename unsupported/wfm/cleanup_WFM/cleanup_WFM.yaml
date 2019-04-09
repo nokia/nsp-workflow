@@ -5,9 +5,9 @@ cleanup_WFM:
 
   title:   'Cleanup WFM results'
   author:  'NOKIA NSM'
-  version: '1.0.0'
+  version: '1.2.0'
   package: 'NSP Automation'
-  published:   '2019/04/05 10:00:00 CEST'
+  published:   '2019/04/09 13:30:00 CEST'
   description: 'Delete workflow execution results for house-keeping'
 
   compatibility:
