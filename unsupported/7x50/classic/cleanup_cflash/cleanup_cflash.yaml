@@ -1,0 +1,189 @@
+---
+version: '2.0'
+
+cleanup_cflash:
+  type: direct
+  
+  title:   'Cleanup Nokia SROS cflash'
+  author:  'NOKIA NSM'
+  version: '1.0.0'
+  package: 'SROS Automation'
+  published: '2019/04/05 10:00:00 CEST'
+  description: 'Deletion of old files from CF-card in specified directories'
+
+  compatibility:
+    - NSP: ['18.12', '19.3']
+    - SROS:
+      - releases: [14, 15, 16]
+      - mgmtmode: ['classic']
+  
+  tags:
+    - Nokia WFM blueprint
+
+  input:
+    - host:   '138.120.48.245'
+    - user:   'admin'
+    - passwd: 'admin'
+    - dirs:   ['cf1:/demo', 'cf1:/act']
+    
+    - deleteBefore: '2019-04-04T16:00'
+    - deleteAge: 3600
+    - dryRun: True
+    
+  output:
+    node: <% $.host %>
+    dirs: <% $.dirs %>
+    result: <% $.response %>
+
+  tasks:
+    getNodeTime:
+      action: nsp.sr_cli
+      input: 
+        host: '<% $.host %>'
+        username: '<% $.user %>'
+        password: '<% $.passwd %>'
+        cmd: |
+          /show time
+      publish:
+        nodeTime: <% task().result %>
+      on-success:
+        - readDirectories
+
+    readDirectories:
+      with-items: dir in <% $.dirs %>
+      action: nsp.sr_cli
+      input: 
+        host: '<% $.host %>'
+        username: '<% $.user %>'
+        password: '<% $.passwd %>'
+        cmd: |
+          /environment no more
+          /file dir <% $.dir %>
+      publish:
+        dirResults: <% task().result %>
+      on-success:
+        - applyFilter
+
+    applyFilter:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var safeList = {
+            "BOF.CFG": 1,
+            "CONFIG.CFG": 1,
+            "NVRAM.DAT": 1,
+            "bootlog.txt": 1,
+            "restcntr.txt": 1,
+            "nvsys.info": 1,
+            "I386-CPM.TIM": 1,
+            "I386-IOM.TIM": 1,
+            "i386-boot.tim": 1,
+            "i386-both.tim": 1,
+            "i386-isa-aa.tim": 1,
+            "i386-vxrom.bin": 1,
+            "CHAIN.C32": 1,
+            "LDLINUX.C32": 1,
+            "LDLINUX.SYS": 1,
+            "LIBCOM32.C32": 1,
+            "MENU.C32": 1,
+            "SYSLINUX.CFG": 1,
+            "libutil_com.c32": 1
+          };
+          
+          var files = $.dirResults;
+          var list = [];
+          var re = /^[0-9]{2}/;
+          
+          var nodeTime = $.nodeTime["cmd1-/show time\n"][1]
+          if ($.deleteBefore != "") {
+            var delTime = Date.parse($.deleteBefore);
+            var timeZone = "UTC";
+          } else {
+            var delTime = Date.parse(nodeTime) - 1000*Number($.deleteAge);
+            var timeZone = nodeTime.split(/\s+/)[4];
+          }
+          
+          files.forEach(function(dir) {
+            for (var key in dir) {
+              var currDir = key.split(/\s/)[5];
+              
+              val = dir[key];
+              val.forEach(function(cmd) {
+                if (cmd.match(re)) {
+                  var file = cmd.split(/\s+/);
+                  if (!(file[3] in safeList) && (file[2]!=="<DIR>")) {
+                    var [hour, minute] = file[1].split(/:/);
+                    if ( minute.endsWith("p") && Number(hour)!==12) {
+                      hour = Number(hour) + 12;
+                    }
+                    minute = minute.substring(0, minute.length-1);
+                    var fileTime = new Date(file[0]+" "+hour+":"+minute+" "+timeZone);
+                    if (Number(fileTime) < delTime) {
+                      var fileFdn = currDir + "/" + file[3];
+                      list.push(fileFdn);
+                    }
+                  }
+                }
+              });
+            }
+          });
+          
+          return list
+          
+      publish:
+        filteredList: <% task().result %>
+      on-success:
+        - doneSuccess: <% $.dryRun = True %>
+        - deleteFiles: <% $.dryRun != True %>
+        
+    deleteFiles:
+      with-items: file in <% $.filteredList %>
+      action: nsp.sr_cli
+      input: 
+        host: '<% $.host %>'
+        username: '<% $.user %>'
+        password: '<% $.passwd %>'
+        cmd: |
+          /file delete <% $.file %> force
+      publish:
+        cliResponse: <% task().result %>
+      on-success:
+        - chkResponses
+        
+    chkResponses:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var cliResponse = $.cliResponse;
+          var status = "True";
+          cliResponse.forEach(function(cmd){
+            for (var key in cmd) {
+              if (!(cmd[key][1].endsWith("OK"))) {
+                status = "False";
+              }
+            }
+          });
+          
+          return status
+
+      publish:
+        cliCheck: <% task().result %>
+      on-success:
+        - doneSuccess: <% $.cliCheck = True %>
+        - doneFailed: <% $.cliCheck = False %>
+
+    doneSuccess:
+      action: std.echo
+      input: 
+        output: <% $.filteredList %>
+      publish:
+        response: <% $.filteredList %>
+        
+    doneFailed:
+      action: std.echo
+      input: 
+        output: <% $.filteredList %>
+      publish:
+        response: <% $.filteredList %>
