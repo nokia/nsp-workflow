@@ -1,0 +1,82 @@
+version: '2.0'
+
+cleanup_WFM:
+  type: direct
+
+  title:   'Cleanup WFM results'
+  author:  'NOKIA NSM'
+  version: '1.0.0'
+  package: 'NSP Automation'
+  published:   '2019/04/05 10:00:00 CEST'
+  description: 'Delete workflow execution results for house-keeping'
+
+  compatibility:
+    - NSP: ['19.3']
+  
+  tags:
+    - Nokia WFM blueprint
+
+  input:
+    - token_auth : ''
+    - rest_gateway_host : ''
+    - workFlowName: 'cleanup_WFM'
+    - workFlowState: 'ERROR'
+    - deleteBefore: '2019-04-04T16:00'
+    - deleteAge: 3600
+
+  tasks:
+    getQueryFilter:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var delTime = new Date()
+          if ($.deleteBefore != '') {
+            delTime = new Date($.deleteBefore)
+          } else if ($.deleteAge > 0) {
+            delTime = new Date(delTime - 1000*$.deleteAge);
+          }
+
+          var filter = "?created_at=lt:";
+          filter += delTime.getUTCFullYear() + "-" + (delTime.getUTCMonth()+1) + "-" + delTime.getUTCDate();
+          filter += "%20";
+          filter += delTime.getUTCHours() + ":" + delTime.getUTCMinutes() + ":" + delTime.getUTCSeconds();
+          
+          if ($.workFlowName != '') {
+            filter = filter + "&workflow_name=" + $.workFlowName;
+          }
+          if ($.workFlowState != '') {
+            filter = filter + "&state=" + $.workFlowState;
+          }
+          return filter;
+      publish:
+          queryFilter: <% task().result %>
+      on-success:
+        - getFilteredRuns
+
+    getFilteredRuns:
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution<% $.queryFilter %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+      publish:
+        wfmExecId:  <% task().result.content.response.data.id %>
+      on-success:
+       - deleteExecutions    
+
+    deleteExecutions:
+      with-items: id in <% $.wfmExecId %>
+      action: std.http
+      input:
+        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution/<% $.id %>'
+        method: DELETE
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+      publish:
+        resultTest: <% task().result %>
