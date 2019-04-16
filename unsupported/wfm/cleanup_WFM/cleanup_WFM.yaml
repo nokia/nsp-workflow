@@ -7,10 +7,10 @@ cleanup_WFM:
   workflow_meta:
     title:   'Cleanup WFM results'
     author:  'NOKIA NSM'
-    version: '1.2.1'
+    version: '1.2.2'
     license: 'MIT'
     package: 'NSP Automation'
-    published: '2019/04/16 14:10:00 CEST'
+    published: '2019/04/16 14:30:00 CEST'
     description: 'Delete workflow execution results for house-keeping'
     deprecated: false
     engine:
@@ -27,11 +27,14 @@ cleanup_WFM:
 
   input:
     - token_auth : ''
-    - rest_gateway_host : ''
+    - rest_gateway : ''
     - workFlowName: 'cleanup_WFM'
     - workFlowState: 'ERROR'
     - deleteBefore: '2019-04-04T16:00'
     - deleteAge: 3600
+
+  output:
+    workflow_results: <% $.wfmExecId %>
 
   tasks:
     getQueryFilter:
@@ -66,7 +69,7 @@ cleanup_WFM:
     getFilteredRuns:
       action: std.http
       input:
-        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution<% $.queryFilter %>'
+        url: 'https://<% $.rest_gateway %>:8543/wfm/api/v1/execution<% $.queryFilter %>'
         method: GET
         verify: False
         headers:
@@ -81,7 +84,7 @@ cleanup_WFM:
       with-items: id in <% $.wfmExecId %>
       action: std.http
       input:
-        url: 'https://<% $.rest_gateway_host %>:8543/wfm/api/v1/execution/<% $.id %>'
+        url: 'https://<% $.rest_gateway %>:8543/wfm/api/v1/execution/<% $.id %>'
         method: DELETE
         verify: False
         headers:
