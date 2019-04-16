@@ -4,14 +4,15 @@ version: '2.0'
 cleanup_cflash:
   type: direct
 
+  description: 'Deletion of old files from CF-card in specified directories'
+
   workflow_meta:
     title:   'Cleanup Nokia SROS cflash'
     author:  'NOKIA NSM'
-    version: '1.0.1'
+    version: '1.0.2'
     license: 'MIT'
     package: 'SROS Automation'
-    published: '2019/04/16 14:00:00 CEST'
-    description: 'Deletion of old files from CF-card in specified directories'
+    published: '2019/04/16 17:08:00 CEST'
     deprecated: false
     engine:
       wfm: '>=2.0'
@@ -34,7 +35,7 @@ cleanup_cflash:
     - host:   '138.120.48.245'
     - user:   'admin'
     - passwd: 'admin'
-    - dirs:   ['cf3:/act']    
+    - dirs:   ['cf3:/act']
     - deleteBefore: '2019-04-04T16:00'
     - deleteAge: 3600
     - dryRun: True
