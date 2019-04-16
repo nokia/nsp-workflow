@@ -1,18 +1,27 @@
+---
 version: '2.0'
 
 cleanup_WFM:
   type: direct
 
-  title:   'Cleanup WFM results'
-  author:  'NOKIA NSM'
-  version: '1.2.0'
-  package: 'NSP Automation'
-  published:   '2019/04/09 13:30:00 CEST'
-  description: 'Delete workflow execution results for house-keeping'
+  workflow_meta:
+    title:   'Cleanup WFM results'
+    author:  'NOKIA NSM'
+    version: '1.2.1'
+    license: 'MIT'
+    package: 'NSP Automation'
+    published: '2019/04/16 14:10:00 CEST'
+    description: 'Delete workflow execution results for house-keeping'
+    deprecated: false
+    engine:
+      wfm: '>=2.0'
+      nspOS: ['18.12', '19.*']
+      nfmp: []
+    urls:
+      homepage: 'https://github.com/nokia/nsp-workflow/tree/master/unsupported/wfm/cleanup_WFM'
+      repository: 'https://github.com/nokia/nsp-workflow'
+      bugs: 'https://github.com/nokia/nsp-workflow/issues'
 
-  compatibility:
-    - NSP: ['19.3']
-  
   tags:
     - Nokia WFM blueprint
 
@@ -41,7 +50,7 @@ cleanup_WFM:
           filter += delTime.getUTCFullYear() + "-" + (delTime.getUTCMonth()+1) + "-" + delTime.getUTCDate();
           filter += "%20";
           filter += delTime.getUTCHours() + ":" + delTime.getUTCMinutes() + ":" + delTime.getUTCSeconds();
-          
+
           if ($.workFlowName != '') {
             filter = filter + "&workflow_name=" + $.workFlowName;
           }
@@ -66,7 +75,7 @@ cleanup_WFM:
       publish:
         wfmExecId:  <% task().result.content.response.data.id %>
       on-success:
-       - deleteExecutions    
+       - deleteExecutions
 
     deleteExecutions:
       with-items: id in <% $.wfmExecId %>
