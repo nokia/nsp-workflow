@@ -1,7 +1,7 @@
 ---
 version: '2.0'
 
-cleanup_cflash:
+cleanup_cflash2:
   type: direct
 
   description: 'Deletion of old files from CF-card in specified directories'
@@ -33,7 +33,7 @@ cleanup_cflash:
     - host:
     - user:
     - passwd:
-    - dirs:   ['cf3:/act']
+    - dirs:   ['cf1:/demo', 'cf1:/act']
     - deleteBefore: '2019-04-04T16:00'
     - deleteAge: 3600
     - dryRun: True
@@ -137,22 +137,34 @@ cleanup_cflash:
             }
           });
           return list
-
       publish:
         filteredList: <% task().result %>
       on-success:
         - doneSuccess: <% $.dryRun = True %>
-        - deleteFiles: <% $.dryRun != True %>
+        - buildCLI: <% $.dryRun != True %>
+
+    buildCLI:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var cmds="";
+          $.filteredList.forEach(function(fname) {
+            cmds += "/file delete "+fname+ " force\n";
+          });
+          return cmds;
+      publish:
+        cliCommands: <% task().result %>
+      on-success:
+        - deleteFiles
 
     deleteFiles:
-      with-items: file in <% $.filteredList %>
       action: nsp.sr_cli
       input:
         host: '<% $.host %>'
         username: '<% $.user %>'
         password: '<% $.passwd %>'
-        cmd: |
-          /file delete <% $.file %> force
+        cmd: '<% $.cliCommands %>'
       publish:
         cliResponse: <% task().result %>
       on-success:
@@ -163,16 +175,15 @@ cleanup_cflash:
       input:
         context: <% $ %>
         script: |
-          var cliResponse = $.cliResponse;
           var status = "True";
-          cliResponse.forEach(function(cmd){
-            for (var key in cmd) {
-              if (!(cmd[key][1].endsWith("OK"))) {
+          for (var key in $.cliResponse) {
+            $.cliResponse[key].forEach(function(line){
+              if (line.startsWith("Deleting") && !(line.endsWith("OK"))) {
                 status = "False";
               }
-            }
-          });
-          return status
+            });
+          }
+          return status;
       publish:
         cliCheck: <% task().result %>
       on-success:

@@ -1,6 +1,6 @@
 ![NOKIA](https://raw.githubusercontent.com/nokia/nsp-workflow/master/logo.png)
 # Nokia NSP WFM demo workflow
-## Workflow Manager - Cleanup CF
+## Workflow Manager - Cleanup CF (Version 2)
 
 ### Description
 
