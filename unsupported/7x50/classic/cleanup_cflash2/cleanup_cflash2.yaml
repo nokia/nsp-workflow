@@ -17,7 +17,7 @@ cleanup_cflash2:
     package: 'SROS Automation'
     deprecated: false
     urls:
-      homepage: 'https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/cleanup_cflash'
+      homepage: 'https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/cleanup_cflash2'
       repository: 'https://github.com/nokia/nsp-workflow'
       bugs: 'https://github.com/nokia/nsp-workflow/issues'
     dependencies:
