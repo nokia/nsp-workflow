@@ -6,29 +6,28 @@ cleanup_WFM:
 
   description: 'Delete workflow execution results for house-keeping'
 
+  tags:
+    - demo workflow by NOKIA
+
   workflow_meta:
     title:   'Cleanup WFM results'
     author:  'NOKIA NSM'
-    version: '1.2.3'
-    license: 'MIT'
+    version: '1.0.0'
+    license: 'BSD-3'
     package: 'NSP Automation'
-    published: '2019/04/16 17:07:00 CEST'
     deprecated: false
-    engine:
-      wfm: '>=2.0'
-      nspOS: ['18.12', '19.*']
-      nfmp: []
     urls:
       homepage: 'https://github.com/nokia/nsp-workflow/tree/master/unsupported/wfm/cleanup_WFM'
       repository: 'https://github.com/nokia/nsp-workflow'
       bugs: 'https://github.com/nokia/nsp-workflow/issues'
-
-  tags:
-    - Nokia WFM blueprint
+    dependencies:
+      platform:
+        nspOS: ['18.12', '19.*']
+        nfmp: []
 
   input:
-    - token_auth : ''
-    - rest_gateway : ''
+    - token_auth:
+    - rest_gateway: 'localhost'
     - workFlowName: 'cleanup_WFM'
     - workFlowState: 'ERROR'
     - deleteBefore: '2019-04-04T16:00'
