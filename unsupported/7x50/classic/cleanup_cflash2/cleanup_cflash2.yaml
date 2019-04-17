@@ -33,7 +33,7 @@ cleanup_cflash2:
     - host:
     - user:
     - passwd:
-    - dirs:   ['cf1:/demo', 'cf1:/act']
+    - dirs:   ['cf3:/act']
     - deleteBefore: '2019-04-04T16:00'
     - deleteAge: 3600
     - dryRun: True
