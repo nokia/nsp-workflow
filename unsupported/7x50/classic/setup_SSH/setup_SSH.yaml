@@ -1,0 +1,110 @@
+---
+version: '2.0'
+
+setup_SSH:
+  type: direct
+
+  description: Enable SSH without password using auth-keys
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Enable SSH using auth-keys
+    author:  NOKIA NSM
+    version: '1.0.0'
+    license: BSD-3
+    package: SROS Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/setup_SSH
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['18.12', '19.*']
+        nfmp: []
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['14.0', '15.*', '16.0']
+          mgmtmode: ['classic']
+
+  input:
+    - token_auth:
+    - server:
+        host: localhost
+        username: root
+        password: changeme
+    - node:
+        host: 135.228.155.151
+        neId: 92.168.96.68
+        username: admin
+        password: admin
+    - sshuser: nspuser
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    get_public_key:
+      action: std.ssh
+      input:
+        host: '<% $.server.host %>'
+        username: '<% $.server.username %>'
+        password: '<% $.server.password %>'
+        cmd: |
+          cat ~/.ssh/id_rsa.pub
+      publish:
+        rsakey: <% regex("\s*ssh-rsa\s+(\S+)\s+.*\n").replace(task().result, "\\1") %>
+      on-success:
+        - create_ssh_user
+
+    create_ssh_user:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.node.host %>'
+        username: '<% $.node.username %>'
+        password: '<% $.node.password %>'
+        cmd:
+          - configure system security user <% $.sshuser %>
+          - access console
+          - console member "administrative"
+          - public-keys
+          - rsa
+          - rsa-key 1 create
+          - key-value <% $.rsakey %>
+          - exit all
+      publish:
+        status: <% task().result %>
+      on-error:
+        - create_ssh_user_MD
+
+    create_ssh_user_MD:
+      action: std.http
+      input:
+        url: https://localhost:8545/restconf/data/network-device-mgr:/network-elements/network-element=<% $.node.neId %>/root/nokia-conf:/configure/system/security/user-params/local-user/user=<% $.sshuser %>
+        method: PUT
+        verify: False
+        headers:
+          Authorization: Bearer <% $.token_auth %>
+          Accept: application/yang-data+json
+          Content-Type: application/yang-data+json
+        body:
+          user-name: '<% $.sshuser %>'
+          password: 'NokiaNsp1!'
+          console:
+            member:
+            - default
+            - administrative
+          access:
+            console: true
+          public-keys:
+            rsa:
+              rsa-key:
+              - rsa-public-key-id: 1
+                key-value: <% $.rsakey %>
+
+...

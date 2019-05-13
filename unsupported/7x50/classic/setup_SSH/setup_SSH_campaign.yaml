@@ -1,0 +1,76 @@
+---
+version: '2.0'
+
+setup_SSH_campaign:
+  type: direct
+
+  description: Enable SSH without password using auth-keys on many nodes
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Enable SSH using auth-keys
+    author:  NOKIA NSM
+    version: '1.0.0'
+    license: BSD-3
+    package: SROS Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/setup_SSH
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['18.12', '19.*']
+        nfmp: []
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['14.0', '15.*', '16.0']
+          mgmtmode: ['classic']
+
+  input:
+    - token_auth:
+    - rest_gateway : localhost
+    - server:
+        host: localhost
+        username: root
+        password: changeme
+    - sshuser: nspuser
+    - concurrency: 1
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    get_targets:
+      action: std.http
+      input:
+        url: https://<% $.rest_gateway %>:8544/NetworkSupervision/rest/api/v1/networkElements?filter=product='7750 SR'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        neInventory: <% task().result.content.response.data %>
+      on-success:
+        - execute
+
+    execute:
+      with-items: host in <% $.neInventory %>
+      concurrency: <% int($.concurrency) %>
+      workflow: setup_SSH
+      input:
+        server: <% $.server %>
+        sshuser: <% $.sshuser %>
+        node:
+          host: <% $.host.ipAddress %>
+          neId: <% $.host.neId %>
+          username: admin
+          password: admin
+
+...
