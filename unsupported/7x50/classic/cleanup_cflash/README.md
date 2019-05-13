@@ -5,7 +5,7 @@
 ### Description
 
 ### Version
-WFM Cleanup CF - version 1.0
+Cleanup CF - version 1.0.0
 
 ### Support level
 Unsupported, use at your own risk!
@@ -13,9 +13,7 @@ Unsupported, use at your own risk!
 ### History
 |Version|Author|Date      |Comments     |
 |-------|------|----------|-------------|
-|   1.0 |  SW  |2019-04-17|first version|
-
-
+| 1.0.0 |  SW  |2019-05-13|first version|
 
 ### Prerequisites
 Nokia NSP with Workflow Manager
