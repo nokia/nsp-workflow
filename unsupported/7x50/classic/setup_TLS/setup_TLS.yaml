@@ -1,24 +1,25 @@
+---
 version: '2.0'
 
 setup_TLS:
   type: direct
 
-  description: 'Issue/Reissue and install certs and activate TLS'
+  description: Issue/Reissue and install certs and activate TLS
 
   tags:
     - demo workflow by NOKIA
 
   workflow_meta:
-    title:   'Setup TLS with certificates on Nokia SROS nodes'
-    author:  'NOKIA NSM'
+    title:   Setup TLS with certificates on Nokia SROS nodes
+    author:  NOKIA NSM
     version: '1.0.0'
-    license: 'BSD-3'
-    package: 'SROS Automation'
+    license: BSD-3
+    package: SROS Automation
     deprecated: false
     urls:
-      homepage: 'https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/setup_TLS'
-      repository: 'https://github.com/nokia/nsp-workflow'
-      bugs: 'https://github.com/nokia/nsp-workflow/issues'
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/setup_TLS
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
       platform:
         nspOS: ['18.12', '19.*']
@@ -32,14 +33,18 @@ setup_TLS:
     - pki_host: 'localhost'
     - pki_user: 'root'
     - pki_password: 'changeme'
-
     - host: '135.228.155.151'
     - hostname: 'sim151'
     - username: 'admin'
     - password: 'admin'
 
   output:
-    status: <% $.status %>
+    result: done
+    expDateBefore: <% $.exp_old %>
+    expDateAfter: <% $.exp_new %>
+
+  output-on-error:
+    result: failed
 
   tasks:
     checkHostCertificate:
@@ -53,6 +58,8 @@ setup_TLS:
           openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
       publish:
         exp_old: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
+      publish-on-error:
+        exp_old: none
       on-error:
         - checkCaCertificate
       on-success:
@@ -76,7 +83,6 @@ setup_TLS:
           openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
           curl --insecure --user <% $.username %>:<% $.password %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
           curl --insecure --user <% $.username %>:<% $.password %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
-
       publish:
         exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
       on-success:
@@ -88,14 +94,10 @@ setup_TLS:
         host: '<% $.host %>'
         username: '<% $.username %>'
         password: '<% $.password %>'
-        cmd: |
-          admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
-          admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
-          admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
-      publish:
-        result03: <% task().result %>
-      on-success:
-        - actionDone
+        cmd:
+          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
 
     checkCaCertificate:
       action: std.ssh
@@ -105,8 +107,6 @@ setup_TLS:
         password: '<% $.pki_password %>'
         cmd: |
           /opt/nsp/os/jre/bin/keytool -list -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass 'NokiaNsp1!'
-      publish:
-        result04: <% task().result %>
       on-error:
         - createCaCertificate
       on-success:
@@ -133,8 +133,6 @@ setup_TLS:
           unalias cp
           cp -f /opt/nsp/os/ssl/nsp.truststore /opt/nsp/os/ssl/nsp.truststore.bak
           echo -e "y" | /opt/nsp/os/jre/bin/keytool -import -alias myTelemetryCa -keystore /opt/nsp/os/ssl/nsp.truststore -file /opt/nsp/os/ssl/certs/telemetry/CAcert.der -storepass "NokiaNsp1!"
-      publish:
-        result05: <% task().result %>
       on-success:
         - copyCaCertificatesToNode
 
@@ -149,8 +147,6 @@ setup_TLS:
           cd /opt/nsp/os/ssl/certs/telemetry
           curl --insecure --user <% $.username %>:<% $.password %> -T CAcert.pem sftp://<% $.host %>/cf3:/
           curl --insecure --user <% $.username %>:<% $.password %> -T CAcrl.pem sftp://<% $.host %>/cf3:/
-      publish:
-        result06: <% task().result %>
       on-success:
         - createHostCertificate
 
@@ -165,10 +161,11 @@ setup_TLS:
           openssl genrsa -out private/<% $.hostname %>_key.pem 2048
           openssl req -out <% $.hostname %>_certreq.pem -key private/<% $.hostname %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.hostname %>/emailAddress=nobody@nokia.com"
           openssl ca  -out <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.host %>") -infiles <% $.hostname %>_certreq.pem
+          openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
           curl --insecure --user <% $.username %>:<% $.password %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
           curl --insecure --user <% $.username %>:<% $.password %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
       publish:
-        result07: <% task().result %>
+        exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
       on-success:
         - importKeyAndCerts
 
@@ -178,13 +175,11 @@ setup_TLS:
         host: '<% $.host %>'
         username: '<% $.username %>'
         password: '<% $.password %>'
-        cmd: |
-          admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
-          admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
-          admin certificate import type cert input cf3:/CAcert.pem output cacert.crt format pem
-          admin certificate import type crl  input cf3:/CAcrl.pem  output cacrl.crt  format pem
-      publish:
-        result08: <% task().result %>
+        cmd:
+          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input cf3:/CAcert.pem output cacert.crt format pem
+          - admin certificate import type crl  input cf3:/CAcrl.pem  output cacrl.crt  format pem
       on-success:
         - configureTLS
 
@@ -194,40 +189,32 @@ setup_TLS:
         host: '<% $.host %>'
         username: '<% $.username %>'
         password: '<% $.password %>'
-        cmd: |
-          configure system security pki ca-profile "tls-ca" create
-          cert-file "cacert.crt"
-          crl-file "cacrl.crt"
-          no shutdown
-          exit all
-          configure system security tls cert-profile "tls-certs" create
-          entry 1 create
-          cert "hostcert.crt"
-          key "hostkey.crt"
-          exit
-          no shutdown
-          exit all
-          configure system security tls server-cipher-list "tls-ciphers" create
-          cipher 1 name tls-rsa-with-null-md5
-          cipher 2 name tls-rsa-with-null-sha
-          cipher 3 name tls-rsa-with-null-sha256
-          cipher 4 name tls-rsa-with3des-ede-cbc-sha
-          cipher 5 name tls-rsa-with-aes128-cbc-sha
-          cipher 6 name tls-rsa-with-aes256-cbc-sha
-          cipher 7 name tls-rsa-with-aes128-cbc-sha256
-          cipher 8 name tls-rsa-with-aes256-cbc-sha256
-          exit all
-          configure system security tls server-tls-profile "grpc-tls-profile" create
-          cert-profile "tls-certs"
-          cipher-list  "tls-ciphers"
-          no shutdown
-          exit all
-      publish:
-        result7: <% task().result %>
-      on-success:
-        - actionDone
-
-    actionDone:
-      action: std.noop
-      publish:
-        status: "done"
+        cmd:
+          - configure system security pki ca-profile "tls-ca" create
+          - cert-file "cacert.crt"
+          - crl-file "cacrl.crt"
+          - no shutdown
+          - exit all
+          - configure system security tls cert-profile "tls-certs" create
+          - entry 1 create
+          - cert "hostcert.crt"
+          - key "hostkey.crt"
+          - exit
+          - no shutdown
+          - exit all
+          - configure system security tls server-cipher-list "tls-ciphers" create
+          - cipher 1 name tls-rsa-with-null-md5
+          - cipher 2 name tls-rsa-with-null-sha
+          - cipher 3 name tls-rsa-with-null-sha256
+          - cipher 4 name tls-rsa-with3des-ede-cbc-sha
+          - cipher 5 name tls-rsa-with-aes128-cbc-sha
+          - cipher 6 name tls-rsa-with-aes256-cbc-sha
+          - cipher 7 name tls-rsa-with-aes128-cbc-sha256
+          - cipher 8 name tls-rsa-with-aes256-cbc-sha256
+          - exit all
+          - configure system security tls server-tls-profile "tls-server-profile" create
+          - cert-profile "tls-certs"
+          - cipher-list  "tls-ciphers"
+          - no shutdown
+          - exit all
+...
