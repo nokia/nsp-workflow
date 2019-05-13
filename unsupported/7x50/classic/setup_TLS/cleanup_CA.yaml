@@ -1,0 +1,34 @@
+---
+version: '2.0'
+
+cleanup_CA:
+  type: direct
+
+  tags:
+    - demo workflow by NOKIA
+
+  input:
+    - pki_host: '135.121.88.81'
+    - pki_user: 'root'
+    - pki_password: 'changeme'
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    cleanup:
+      action: std.ssh
+      input:
+        host: '<% $.pki_host %>'
+        username: '<% $.pki_user %>'
+        password: '<% $.pki_password %>'
+        cmd: |
+          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass 'NokiaNsp1!'
+          cd /opt/nsp/os/ssl/certs
+          rm -rf telemetry
+          rm /etc/pki/CA/index.txt
+          rm /etc/pki/CA/crlnumber        
+...
