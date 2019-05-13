@@ -17,9 +17,9 @@ migratePbbEline:
     package: Service Automation
     deprecated: false
     urls:
-      homepage: 'https://github.com/nokia/nsp-workflow/tree/master/unsupported/...'
-      repository: 'https://github.com/nokia/nsp-workflow'
-      bugs: 'https://github.com/nokia/nsp-workflow/issues'
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/ibn/migratePbbEline
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
       platform:
         nspOS: ['18.12', '19.*']
