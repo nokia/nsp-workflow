@@ -1,4 +1,3 @@
----
 version: '2.0'
 
 cleanup_cflash2:
@@ -11,8 +10,9 @@ cleanup_cflash2:
 
   workflow_meta:
     title:   Cleanup SR OS node cflash
-    author:  NOKIA NSM
-    version: '1.0.2'
+    author:  NOKIA DEMO
+    signature: 339b1df09534bc1467d034da192172114d7d9aaa631dd0d98614b1df075d498944a38bca7e02d763c19ff9cda269908de077e6c072a77390c40ec48e7b311a01b9954e65e872e17cb2a0b1f30b85187bc3e10ec7a7eeb99411250e967fcd880ecd6a460b8e1ef81ddca447bbd35eca53a8c4f52500bff394d0d8258dcb01efaf81797f85ab96918d9d1b29662140eb3bb5af17264be39b7ea5666fcbe5edca41951441a02908b4933d17e88dab967891959055e8d30832dc1c48ac87d48536dd4b5c5cfbe323ab18910661fadb0af9c576cb952237eaf4fcca2dc420eb6cd477e18bf4d4d10c73a1f12a9e7f05815e96fe384c8fd0875e5044f0fe5eea97ee61
+    version: '1.0.0'
     license: BSD-3
     package: SROS Automation
     deprecated: false
