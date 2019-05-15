@@ -12,7 +12,7 @@ cleanup_cflash2:
   workflow_meta:
     title:   Cleanup SR OS node cflash
     author:  NOKIA NSM
-    version: '1.0.0'
+    version: '1.0.1'
     license: BSD-3
     package: SROS Automation
     deprecated: false
