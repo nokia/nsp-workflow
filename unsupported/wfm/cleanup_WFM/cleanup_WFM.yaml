@@ -1,4 +1,3 @@
----
 version: '2.0'
 
 cleanup_WFM:
@@ -12,6 +11,7 @@ cleanup_WFM:
   workflow_meta:
     title:   Cleanup WFM results
     author:  NOKIA DEMO
+    signature: 8dde39e7647eef52a0b68379308cb5f7e82a2afcc603d369ffbe20ec5d52979eacaff00780527ce261bb172fa89a0268fd356d52d18277721c70b0a88269ed8e1db99d31e68cc67fbd8c2d61877ab9afd2ff07f21f65bb07b8c1cba9739785e885525b49d0ff22a969b6b5ae3241e31ecd495e6f8c95b8af2c92a3c00fefb561c168f5d796f7a8734a6339ac016350adfb2c80880dc446235b4d6ad0c95104cc1a4b1ea89a5a6009ed38e6005ebd93cee34118457ec77810c4dcd197d86e15ee1751d5193ec113dd143f1992f76123d6cab9bd56acc4ba147885485c8a8a23e0f747ba34713f53bdce35e4d6995d2a9f3b371bf882f549b32edabc621530c9ae
     version: '1.0.0'
     license: BSD-3
     package: NSP Automation
@@ -22,16 +22,17 @@ cleanup_WFM:
       bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
       platform:
-        nspOS: ['18.12', '19.*']
-        nfmp: []
+        nspOS: ['19.6']
 
   input:
     - token_auth:
-    - rest_gateway : localhost
-    - workFlowName: cleanup_WFM
-    - workFlowState: ERROR
-    - deleteBefore: '2019-05-01T00:00'
-    - deleteAge: 3600
+    - workFlowName:
+    - workFlowState:
+    - deleteBefore:
+    - deleteAge:
+
+  vars:
+    wfm: <% locate_nsp("Executions") %>
 
   output:
     result: done
@@ -74,7 +75,7 @@ cleanup_WFM:
       action: std.http
       safe-rerun: true
       input:
-        url: https://<% $.rest_gateway %>:8543/wfm/api/v1/execution<% $.queryFilter %>
+        url: <% $.wfm %>/v1/execution<% $.queryFilter %>
         method: GET
         verify: False
         headers:
@@ -89,7 +90,7 @@ cleanup_WFM:
       with-items: id in <% $.wfmResults %>
       action: std.http
       input:
-        url: https://<% $.rest_gateway %>:8543/wfm/api/v1/execution/<% $.id %>
+        url: <% $.wfm %>/v1/execution/<% $.id %>
         method: DELETE
         verify: False
         headers:

@@ -5,7 +5,7 @@
 ### Description
 
 ### Version
-WFM Cleanup Executions - version 1.2
+WFM Cleanup Executions - version 1.0
 
 ### Support level
 Unsupported, use at your own risk!
@@ -13,26 +13,21 @@ Unsupported, use at your own risk!
 ### History
 |Version|Author|Date      |Comments     |
 |-------|------|----------|-------------|
-|   1.0 |  ML  |2019-01-28|first version|
-|   1.1 |  SW  |2019-03-05|usability improvements|
-|   1.2 |  SW  |2019-04-09|NSP19.3 updates|
-
-
+|   1.0 |  SW  |2019-06-17|NSP19.6 updates|
 
 ### Prerequisites
 Nokia NSP with Workflow Manager
 
 ### Tested with
-* Nokia NSP 19.3
+* Nokia NSP 19.6
 
 ### Installation
-Download the workflow and then use the Workflow Manager workflow Import functionality to import the workflow into your WFM instance.
+Workflow can directly be imported/updated from GitHub using the WFM WebUI.
 
 ### Usage
-The operator must fill-in `rest_gateway_host` to call the workflow. The other four attributes are optional to provide and have the following functionality.
-If none of the attributes are provided, ALL workflow execution results will be removed. If one or more attributes are provided, these act as filter (logical AND) to only remove some results.
-`deleteBefore` allows the operator to specify a timestamps (date/time), so that all executions results from before are removed. In a similar way, the `deleteAge` defines the maximum age of an execution result - while everything older will be removed from the database. The age is defined in seconds.
-With `workFlowName` one can limit the delete operation to a specific worklow. With `workFlowState` one can limit deletes to a specific result (SUCCESS, ERROR).
+By default NSP WFM removes all workflow execution results older than 120 days. In environment where WFM is regularly used, this causes a lot of execution results to be stored which impacts database size and usability. This workflow helps to cleanup the execution history based on user-defined rules. The workflow can be scheduled to automatically clean-up the execution history.
+
+If none of the attributes are provided, ALL workflow execution results will be removed. If one or more attributes are provided, these act as filter (logical AND) to only remove some results. `deleteBefore` allows the operator to specify a timestamps (date/time), so that all executions results from before are removed. In a similar way, the `deleteAge` defines the maximum age of execution results - while everything older than this will be removed from the database. The age is defined in seconds. With `workFlowName` one can limit the delete operation to a specific workflow. With `workFlowState` one can limit deletes to a specific result (SUCCESS, ERROR).
 
 ### License
 This project is licensed under the BSD-3 Clause License. See
