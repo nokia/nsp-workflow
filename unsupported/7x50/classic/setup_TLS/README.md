@@ -20,17 +20,17 @@ Unsupported, use at your own risk!
 ### History
 |Version|Author|Date      |Comments     |
 |-------|------|----------|-------------|
-|   1.0 |  SW  |2019-05-01|first version|
+|   1.0 |  SW  |2019-06-18|             |
 
 ### Prerequisites
-Nokia NSP with Workflow Manager and Telemetry
+Nokia NSP with Workflow Manager
 
 ### Tested with
-* Nokia NSP 19.3
-* Nokia 7750SR running SR OS 16.0.R7 (CLASSIC MODE)
+* Nokia NSP 19.6
+* Nokia 7750SR running SR OS 19.5.R1 (MD MODE)
 
 ### Installation
-Download the workflow and then use the Workflow Manager workflow Import functionality to import the workflow into your WFM instance.
+Workflow can be imported directly from GitHub. WebUI form JSON must be manually be imported. There is a workflow action to setup the environment for that workflow, which needs to be imported and adjusted. 
 
 ### Usage
 
