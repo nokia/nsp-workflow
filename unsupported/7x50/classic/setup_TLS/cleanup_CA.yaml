@@ -1,4 +1,3 @@
----
 version: '2.0'
 
 cleanup_CA:
@@ -7,10 +6,21 @@ cleanup_CA:
   tags:
     - demo workflow by NOKIA
 
-  input:
-    - pki_host: '135.121.88.81'
-    - pki_user: 'root'
-    - pki_password: 'changeme'
+  workflow_meta:
+    title:   Cleanup PKI/CA
+    author:  NOKIA DEMO
+    signature: 35bde3e1456affb1e4f7bc51b49145f8d6f5a15068db1bb9335bd994d1d261c0d2891e01de6e98449331a9260c8be74cd8b10962b13ae1890fc2d461b7c9e3f5bc772e70dba30ef69fbbb7a6c48653dc1b31a637e955a5ce8c4ed68d2fbb91f5899e3f4fd84db5d52473cde3c7cfeb3d582aa3c42d92ab9471ccc927f1664ac703e8eed7c391621d8a0e324fa8161fb89976524025025ab4277d65f219307cd675c40177332d72bc91cce00685aad41d77dadc96f3106414e305835ff1bbaf795cd78ee2adb60043856e9b96fc95d632f7412e9b6e30ba84e540f4ace736393eaf347c455b846cb9902db5d3f6b6487e31e999ff2fce9a0bbb79ba40425691fd
+    version: '1.0.0'
+    license: BSD-3
+    package: SROS Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/setup_TLS
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
 
   output:
     result: done
@@ -19,16 +29,23 @@ cleanup_CA:
     result: failed
 
   tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        cleanup
+
     cleanup:
       action: std.ssh
       input:
-        host: '<% $.pki_host %>'
-        username: '<% $.pki_user %>'
-        password: '<% $.pki_password %>'
+        host: '<% $.env.pki_host %>'
+        username: '<% $.env.pki_user %>'
+        password: '<% $.env.pki_password %>'
         cmd: |
-          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass 'NokiaNsp1!'
+          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pki_storepwd %>'
           cd /opt/nsp/os/ssl/certs
           rm -rf telemetry
           rm /etc/pki/CA/index.txt
-          rm /etc/pki/CA/crlnumber        
+          rm /etc/pki/CA/crlnumber
 ...
