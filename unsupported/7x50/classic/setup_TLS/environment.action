@@ -13,3 +13,4 @@ environment:
     pki_storepass: 'NokiaNsp1!'
     NEuser: admin
     NEpasswd: admin
+...

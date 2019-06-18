@@ -30,9 +30,10 @@ Nokia NSP with Workflow Manager
 * Nokia 7750SR running SR OS 19.5.R1 (MD MODE)
 
 ### Installation
-Workflow can be imported directly from GitHub. WebUI form JSON must be manually be imported. There is a workflow action to setup the environment for that workflow, which needs to be imported and adjusted. 
+Workflow can be imported directly from GitHub. WebUI form JSON must be manually be imported. There is a workflow action to setup the environment for that workflow, which needs to be imported and adjusted.
 
 ### Usage
+Coming soon!
 
 ### License
 This project is licensed under the BSD-3 Clause License. See
