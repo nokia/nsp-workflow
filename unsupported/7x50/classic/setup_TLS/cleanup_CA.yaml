@@ -43,7 +43,7 @@ cleanup_CA:
         username: '<% $.env.pki_user %>'
         password: '<% $.env.pki_password %>'
         cmd: |
-          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pki_storepwd %>'
+          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pki_storepass %>'
           cd /opt/nsp/os/ssl/certs
           rm -rf telemetry
           rm /etc/pki/CA/index.txt
