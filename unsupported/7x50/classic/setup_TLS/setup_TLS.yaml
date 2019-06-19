@@ -11,7 +11,7 @@ setup_TLS:
   workflow_meta:
     title:   Setup TLS with certificates on Nokia SROS nodes
     author:  NOKIA DEMO
-    signature: 05d764ebd1fce2f114b2a1cc88d2fe42b1fbecc64c00d8dc3e0a013cc4efdf23f2c2ef7abbd0f641b41463018e08f106dfa31b9c2a6d8ddb3989a38e4687cf830417757489ce898b11b6e5fd787d84cf4c41691e86d9c1d0e70920bf4848c5d006844ea7c256fe31a33db0d3de26a0acd7acd246d32ab0c8396451d34e8fccab1f4b12ec74961ab33646a8a15039e1d439e481187f280bb852d1dba820350bc7c60d4dbfd4e91dfe9fd1e4355bf1ba1dba278028f566fbd882384e045b816b0e48344e9037097d82500d722869863eb54f14cc99428a986f4417c5648086aadd6d4f8644c3655e53930ab55aa77b89aff2ff2fd305b6bf61f6a0afd1d7b0c118
+    signature: 91c13816ccb73de36150d7a229e5346d21f2dd0497532a26be91e30d7223fca2035f939cb7ced71a25c031a44adf36bd499e999e519dfc365e7c4d73200f223d0a0ba16b629203c2713f81ba3bbc8ab2441908b887c409db148d57f89fb0079f2a145d61c34017e1f026e21a6e7a7a16a94904a62d5c03a312128cd78e7336abe722fc29b901519bb9b94df32ca5025658571228ee4c03511e3351758be93169d7f2742631ffeac8f7dfd92014227de2b6cb62788622e54e87f3535b849f9f3d2d53838c35076b6adac980ddeedaa94b86a470b45c2a04740c1ffdadbde93b15582ea713724d86303095f324cd586fbed098029e8395d0f657be03676ca9063b
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -58,12 +58,19 @@ setup_TLS:
           Content-Type: application/json
           Authorization: Bearer <% $.token_auth %>
       publish:
-        host: '<% task().result.content.response.data.ipAddress.first() %>'
-        hostname: '<% task().result.content.response.data.neName.first() %>'
-        hosttype: '<% task().result.content.response.data.sourceType.first() %>'
+        hostInfo: '<% task().result.content.response.data %>'
       on-success:
-        - fail: <% task().result.content.response.data = [] %>
-        - checkCaCertificate: <% task().result.content.response.data != [] %>
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host:     <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - checkCaCertificate
 
     checkCaCertificate:
       action: std.ssh
@@ -116,9 +123,10 @@ setup_TLS:
       publish:
         exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
       on-success:
-        - activateHostCertificate
+        - activateHostCertificateMDM: <% $.hosttype = 'mdm' %>
+        - activateHostCertificateNFMP: <% $.hosttype = 'nfmp' %>
 
-    activateHostCertificate:
+    activateHostCertificateMDM:
       action: nsp.mdm_cli
       input:
         neId: <% $.neId %>
@@ -127,6 +135,21 @@ setup_TLS:
         verify: False
         cmds:
           - /!classic-cli
+          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
+
+    activateHostCertificateNFMP:
+      action: std.http
+      input:
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
           - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
           - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
           - admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
@@ -188,9 +211,10 @@ setup_TLS:
         exp_old: none
         exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
       on-success:
-        - importKeyAndCerts
+        - importAndConfigureMDM: <% $.hosttype = 'mdm' %>
+        - importAndConfigureNFMP: <% $.hosttype = 'nfmp' %>
 
-    importKeyAndCerts:
+    importAndConfigureMDM:
       action: nsp.mdm_cli
       input:
         neId: <% $.neId %>
@@ -203,18 +227,42 @@ setup_TLS:
           - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
           - admin certificate import type cert input cf3:/CAcert.pem output cacert.crt format pem
           - admin certificate import type crl  input cf3:/CAcrl.pem  output cacrl.crt  format pem
-      on-success:
-        - configureTLS_classic: <% $.hosttype = 'nfmp' %>
-        - configureTLS_MD: <% $.hosttype = 'mdm' %>
+          - /!md-cli
+          - edit-config private
+          - configure system security pki ca-profile "tls-ca" admin-state enable
+          - configure system security pki ca-profile "tls-ca" cert-file "cacert.crt"
+          - configure system security pki ca-profile "tls-ca" crl-file "cacrl.crt"
+          - configure system security tls cert-profile "tls-certs" admin-state enable
+          - configure system security tls cert-profile "tls-certs" entry 1 certificate-file "hostcert.crt"
+          - configure system security tls cert-profile "tls-certs" entry 1 key-file "hostkey.crt"
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 1 name tls-rsa-with-null-md5
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 2 name tls-rsa-with-null-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 3 name tls-rsa-with-null-sha256
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 4 name tls-rsa-with3des-ede-cbc-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 5 name tls-rsa-with-aes128-cbc-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 6 name tls-rsa-with-aes256-cbc-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 7 name tls-rsa-with-aes128-cbc-sha256
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 8 name tls-rsa-with-aes256-cbc-sha256
+          - configure system security tls server-tls-profile "tls-server-profile" admin-state enable
+          - configure system security tls server-tls-profile "tls-server-profile" cert-profile "tls-certs"
+          - configure system security tls server-tls-profile "tls-server-profile" cipher-list "tls-ciphers"
+          - commit
 
-    configureTLS_classic:
-      action: nsp.mdm_cli
+    importAndConfigureNFMP:
+      action: std.http
       input:
-        neId: <% $.neId %>
-        authorization: Bearer <% $.token_auth %>
-        onError: stop
-        verify: False
-        cmds:
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
+          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input cf3:/CAcert.pem output cacert.crt format pem
+          - admin certificate import type crl  input cf3:/CAcrl.pem  output cacrl.crt  format pem
           - configure system security pki ca-profile "tls-ca" create
           - cert-file "cacert.crt"
           - crl-file "cacrl.crt"
@@ -242,35 +290,5 @@ setup_TLS:
           - cipher-list  "tls-ciphers"
           - no shutdown
           - exit all
-
-    configureTLS_MD:
-      action: nsp.mdm_cli
-      input:
-        neId: <% $.neId %>
-        authorization: Bearer <% $.token_auth %>
-        onError: stop
-        verify: False
-        cmds:
-          - edit-config private
-          - configure system security pki ca-profile "tls-ca" admin-state enable
-          - configure system security pki ca-profile "tls-ca" cert-file "cacert.crt"
-          - configure system security pki ca-profile "tls-ca" crl-file "cacrl.crt"
-          - configure system security tls cert-profile "tls-certs" admin-state enable
-          - configure system security tls cert-profile "tls-certs" entry 1 certificate-file "hostcert.crt"
-          - configure system security tls cert-profile "tls-certs" entry 1 key-file "hostkey.crt"
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 1 name tls-rsa-with-null-md5
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 2 name tls-rsa-with-null-sha
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 3 name tls-rsa-with-null-sha256
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 4 name tls-rsa-with3des-ede-cbc-sha
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 5 name tls-rsa-with-aes128-cbc-sha
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 6 name tls-rsa-with-aes256-cbc-sha
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 7 name tls-rsa-with-aes128-cbc-sha256
-          - configure system security tls server-cipher-list "tls-ciphers" cipher 8 name tls-rsa-with-aes256-cbc-sha256
-          - configure system security tls server-tls-profile "tls-server-profile" admin-state enable
-          - configure system security tls server-tls-profile "tls-server-profile" cert-profile "tls-certs"
-          - configure system security tls server-tls-profile "tls-server-profile" cipher-list "tls-ciphers"
-          - commit
-        queryParams:
-          prompt-begin-command": "/!md-cli"
 
 ...
