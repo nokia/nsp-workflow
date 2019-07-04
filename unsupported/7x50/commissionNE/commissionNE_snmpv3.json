@@ -25,7 +25,7 @@
     },
     {
       "name": "neName",
-      "description": "Nodename",
+      "description": "Nodename (used for WebUI)",
       "title": "Nodename",
       "readOnly": false,
       "columnSpan": 4,
@@ -35,9 +35,9 @@
       "baseType": "string"
     },
     {
-      "name": "snmpUser",
-      "description": "snmpUser",
-      "title": "SNMP user",
+      "name": "snmpUsername",
+      "description": "SNMP username",
+      "title": "SNMP username",
       "readOnly": false,
       "columnSpan": 4,
       "required": true,
@@ -47,13 +47,13 @@
     },
     {
       "name": "snmpPassword",
-      "description": "snmpPassword",
+      "description": "SNMP password used for auth/privacy",
       "title": "SNMP password",
       "readOnly": false,
       "columnSpan": 4,
       "required": true,
       "nodetype": "property",
-      "type": "string",
+      "type": "password",
       "baseType": "string"
     }
   ]

@@ -1,0 +1,83 @@
+version: '2.0'
+
+cleanupUserCombined:
+  type: direct
+
+  description: Deletes SSH user from all nodes
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Delete local user from all nodes
+    author:  NOKIA DEMO
+    signature: 4d04a9b97ef5b08462b61fd438dea28105ec321c6903fb4505145457ff8d53e8396469d3dfb8cf5ffac0bb6e744f1eb55a09f28d6d680a92d995ec7ee90a03a080526fb30033d5f804346be172ccc6a82bba9241485b107a753ce3cc3fc3b48d5c2dbf677806de7ffcd8546e47f8086d718e7f0cf453b734bdbbc430cbf9993d0100294358ec92f67be8a2566c67e616388db5502a094ecd34426091c5ff280d2ed334497089f8190980e20441e99763ab4384e0dafe358b5eaf2e1b0de4005e8a91d336088e2cde128b87912e6728ad516a586039ea22950323d0304dbef8251b9b2694e4fb435f981c466cb446a34960d32b3148697684590488d27f2e00cd
+    version: '1.0.0'
+    license: BSD-3
+    package: SROS Automation
+    deprecated: false
+
+  input:
+    - token_auth:
+    - sshUsername: nspuser
+    - concurrency: 1
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getHosts:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=product='7750 SR'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        neInventory: <% task().result.content.response.data %>
+      on-success:
+        - deleteSSHUserMDM
+        - deleteSSHUserNFMP
+
+    deleteSSHUserMDM:
+      with-items: host in <% $.neInventory.where($.sourceType=mdm) %>
+      concurrency: <% int($.concurrency) %>
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.host.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!md-cli
+          - configure private
+          - system security user-params local-user
+          - delete user <% $.sshUsernamenamename %>
+          - commit
+      publish:
+        status: <% task().result %>
+
+    deleteSSHUserNFMP:
+      with-items: host in <% $.neInventory.where($.sourceType=nfmp) %>
+      concurrency: <% int($.concurrency) %>
+      action: std.http
+      input:
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.host.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
+          - configure system security no user <% $.sshUsernamename %>
+          - exit all
+      publish:
+        status: <% task().result %>
+
+...

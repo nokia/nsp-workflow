@@ -7,8 +7,6 @@ environment:
   base-input:
     output: none
   output:
-    neUsername: admin
-    nePassword: admin
     pkiServer: localhost
     pkiUsername: root
     pkiPassword: changeme
@@ -16,5 +14,10 @@ environment:
     mdmServer: localhost
     mdmUsername: root
     mdmPassword: changeme
+    wfmServer: localhost
+    wfmUsername: root
+    wfmPassword: changeme
+    mdcServer: localhost
+    mdcPort: 8545
 
 ...

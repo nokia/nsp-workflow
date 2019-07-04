@@ -1,7 +1,6 @@
----
 version: '2.0'
 
-cleanup_cflash_bulk:
+cleanup_cflash:
   type: direct
 
   description: Deletion of old files from CF-card in specified directories
@@ -12,27 +11,26 @@ cleanup_cflash_bulk:
   workflow_meta:
     title:   Cleanup SR OS node cflash
     author:  NOKIA DEMO
+    signature: 75f334bc65fdc3ca64c8332aecfebc39677c6c2a24cb9f6b26dd2d69d2b9f394b767b4d03d63fce4af8c7a92a55b9c702137d1ae21138cd7e45292d49159784f53e44e8fb65368eade4dc242f7b7cff45b1e0bbcb56d8fe97ffeca92643bfd4b0e09f48be251afaf45a90c79b662ce0f7f6b62a4262e37df83cfb118a1a45a11d04da048f2bb2b1296e0394ed2ec62e805f4c13431d029c8d89b7fe5bc48716897aa0bacdaa76306fa5738dcfc2ce47318515363df0bcb3b0070ac3cdb351f91a8a5efe34278fe76d6d9b4345f900789b5136db228a401a3e4b7ebab6e4b18828af7c6335a535ae6cd2db0d34a3190cf73281731c9c582618c507c48dce45fbe
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
     deprecated: false
     urls:
-      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/cleanup_cflash
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/cleanup_cflash
       repository: https://github.com/nokia/nsp-workflow
       bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
       platform:
-        nspOS: ['18.12', '19.*']
-        nfmp: []
+        nspOS: ['19.6']
       nodal:
         - type: 'Nokia 7x50'
-          releases: ['14.0', '15.*', '16.0']
-          mgmtmode: ['classic']
+          releases: ['19.5']
+          mgmtmode: ['classic', 'model-driven']
 
   input:
+    - token_auth:
     - host:   138.120.48.245
-    - user:   admin
-    - passwd: admin
     - dirs: ['cf1:/demo', 'cf1:/act']
     - deleteBefore: '2019-05-01T00:00'
     - deleteAge: 3600
@@ -46,26 +44,90 @@ cleanup_cflash_bulk:
     result: failed
 
   tasks:
-    getNodeTime:
-      action: nsp.sr_cli
+    checkHost:
+      action: std.http
       input:
-        host: '<% $.host %>'
-        username: '<% $.user %>'
-        password: '<% $.passwd %>'
-        cmd: show time
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - getNodeTimeMDM: <% $.hosttype = 'mdm' %>
+        - getNodeTimeNFMP: <% $.hosttype = 'nfmp' %>
+
+    getNodeTimeMDM:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!classic-cli
+          - show time
       publish:
         nodeTime: <% task().result %>
       on-success:
-        - readDirectories
+        - readDirectoriesMDM
 
-    readDirectories:
-      with-items: dir in <% $.dirs %>
-      action: nsp.sr_cli
+    getNodeTimeNFMP:
+      action: std.http
       input:
-        host: '<% $.host %>'
-        username: '<% $.user %>'
-        password: '<% $.passwd %>'
-        cmd:
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
+          - show time
+      publish:
+        nodeTime: <% task().result %>
+      on-success:
+        - readDirectoriesNFMP
+
+    readDirectoriesMDM:
+      with-items: dir in <% $.dirs %>
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!classic-cli
+          - environment no more
+          - file dir <% $.dir %>
+      publish:
+        dirResults: <% task().result %>
+      on-success:
+        - applyFilter
+
+    readDirectoriesNFMP:
+      with-items: dir in <% $.dirs %>
+      action: std.http
+      input:
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
           - environment no more
           - file dir <% $.dir %>
       publish:
@@ -141,37 +203,33 @@ cleanup_cflash_bulk:
       publish:
         cmdList: <% task().result %>
       on-success:
-        - deleteFiles
+        - deleteFilesMDM: <% $.hosttype = 'mdm' %>
+        - deleteFilesNFMP: <% $.hosttype = 'nfmp' %>
 
-    deleteFiles:
-      action: nsp.sr_cli
+    deleteFilesMDM:
+      action: nsp.mdm_cli
       input:
-        host: '<% $.host %>'
-        username: '<% $.user %>'
-        password: '<% $.passwd %>'
-        cmd: '<% $.cmdList %>'
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds: '<% $.cmdList %>'
       publish:
         cliResponse: <% task().result %>
-      on-success:
-        - chkResponses
 
-    chkResponses:
-      action: std.javascript
+    deleteFilesNFMP:
+      action: std.http
       input:
-        context: <% $ %>
-        script: |
-          var status = false;
-          for (var key in $.cliResponse) {
-            $.cliResponse[key].forEach(function(line){
-              if (line.startsWith("Deleting") && !(line.endsWith("OK"))) {
-                status = true;
-              }
-            });
-          }
-          return status;
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
+          '<% $.cmdList %>'
       publish:
-        cliCheckFailed: <% task().result %>
-      on-success:
-        - fail: <% $.cliCheckFailed %>
+        cliResponse: <% task().result %>
 
 ...

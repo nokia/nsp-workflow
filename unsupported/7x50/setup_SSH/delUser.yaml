@@ -1,23 +1,23 @@
 version: '2.0'
 
-setup_gRPC:
+delUser:
   type: direct
 
-  description: Enable gRPC for telemetry collection
+  description: Delete CLI user from a node
 
   tags:
     - demo workflow by NOKIA
 
   workflow_meta:
-    title:   Setup gRPC on Nokia SROS nodes
+    title:   Delete CLI user from a node
     author:  NOKIA DEMO
-    signature: 50e446bc2c49254d2fc93f5ae6e57d41bd2d7c719fefc5f27362365f7ffe19144fda73c7970e94c08d1e7477a36c74cfd3ec4e23d7bd8db7e6bbab0c7fff7e1fee46f2d49acf61bed92574f48a001f254e71bc255c6f7914b008dc7c927d9a1c8e984b37b544d25969c9ba426f79b43cc95217fc0e9307a8e1ea2b0fb7438d7b4145194b56a6bd521b93f12e5dc4bfec10016d31d343f5329ac4c9783f1fbb0dc9e979a8aae609da45d54312ed9803f8eb5b1b46ebfbb493ae6659167ff7eaaab8757c06da5470676a0af1c4beced03770a58e18ebca960cc1f087bfd2140326ef35aa3e760711cd6bea8781b3634fdd43c287c3bfa8aecfdbbb595a3925d5b7
+    signature: 01d90d1a7eed57f104cdcc94ca488d51192dad756481ac02053a7448c4a3d14a947ad996528cb8dab2e6e676f631349152fc3281878bcf7179009f0abb77b23683ef21f752e37dc266581497865807bf82a3bcf5fb8d861414ce2d3c9aebae02c9856a9d28a93e410e90d0e0e5f07d19b84d6ce34353c78cd92283d192d6da3c40fda74ebbb5df7668d0a14578803684505af56dc705d7d36f16e0ceeb2908fc3a6bc6259ed252b010302f9e865525743c9c6b482f0fb41e17ab787cbbd7bf743cd5b78609f95d7d52f2e4776dcdabd9a9e7c2259d3cae07b51241a9c0df4443f6c1ff1b7ad645f6dafbd34e3fbf5e5addb2130936c33c571441b4a6dfc345c2
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
     deprecated: false
     urls:
-      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/setup_gRPC
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/setup_SSH
       repository: https://github.com/nokia/nsp-workflow
       bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
@@ -29,9 +29,9 @@ setup_gRPC:
           mgmtmode: ['classic', 'model-driven']
 
   input:
+    - token_auth:
     - neId: '1.1.1.1'
-    - grpcUsername: grpc
-    - grpcPassword: Nokia4gnmi
+    - sshUsername: nspuser
 
   output:
     result: done
@@ -40,6 +40,13 @@ setup_gRPC:
     result: failed
 
   tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        checkHost
+
     checkHost:
       action: std.http
       input:
@@ -62,10 +69,10 @@ setup_gRPC:
         hostname: <% $.hostInfo.neName.first() %>
         hosttype: <% $.hostInfo.sourceType.first() %>
       on-success:
-        - grpcSetupMDM: <% $.hosttype = 'mdm' %>
-        - grpcSetupNFMP: <% $.hosttype = 'nfmp' %>
+        - delSSHUserMDM: <% $.hosttype = 'mdm' %>
+        - delSSHUserNFMP: <% $.hosttype = 'nfmp' %>
 
-    grpcSetupMDM:
+    delSSHUserMDM:
       action: nsp.mdm_cli
       input:
         neId: <% $.neId %>
@@ -75,18 +82,13 @@ setup_gRPC:
         cmds:
           - /!md-cli
           - configure private
-          - system security user-params local-user user "<% $.grpcUsername %>"
-          - password "<% $.grpcPassword %>"
-          - access grpc
-          - console member "administrative"
-          - exit
-          - system grpc
-          - tls-server-profile "tls-server-profile"
-          - admin-state enable
-          - exit
+          - system security user-params local-user
+          - delete user <% $.sshUsername %>
           - commit
+      publish:
+        status: <% task().result %>
 
-    grpcSetupNFMP:
+    delSSHUserNFMP:
       action: std.http
       input:
         url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
@@ -97,14 +99,9 @@ setup_gRPC:
           Content-Type: 'application/json'
           Authorization: 'Bearer <% $.token_auth %>'
         body:
-          - configure system security user "<% $.grpcUsername %>"
-          - password "<% $.grpcPassword %>"
-          - access grpc
-          - console member "administrative"
+          - configure system security no user <% $.sshUsername %>
           - exit all
-          - configure system grpc
-          - tls-server-profile "tls-server-profile"
-          - no shutdown
-          - exit all
+      publish:
+        status: <% task().result %>
 
 ...

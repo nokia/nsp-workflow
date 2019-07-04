@@ -1,4 +1,3 @@
----
 version: '2.0'
 
 cleanup_cflash:
@@ -12,6 +11,7 @@ cleanup_cflash:
   workflow_meta:
     title:   Cleanup SR OS node cflash
     author:  NOKIA DEMO
+    signature: 823697b6d6a0dfc97614c36ab72ab9599c3f9fbc40fe6609d2a44bdfbe311f83e935f18d6cc0d76799ae6bdcf9b373349faf801fd1675fedbbc6af0d5b1dfc5a9c7e61269a4fbc700cd84324ad2b43977d77e8a426d7cc3dc864f9b8aa65c036ba291714e2ee0635a8e57058533f920c996e67525e62c7f407fd28ba7d3e340bdafd10b0542de317decd69edb00a2099ea390999c36af3764139fb7cf8144f8835525e925d41740a4acc6dec20e888fdcae42efd0075d2f02e323842ef9cdec623cb3f5cf0c15037a86ac6c8bc09c23e62a6ab48211505d5b30ee5128be3e94dd0eb6c523080a4ed4c083ec34ca22b493b89382a27ea58d7060f8e6815f6a853
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -30,12 +30,11 @@ cleanup_cflash:
 
   input:
     - token_auth:
-    - host:   138.120.48.245
-    - user:   admin
-    - passwd: admin
+    - neId: 1.1.1.1
     - dirs: ['cf1:/demo', 'cf1:/act']
     - deleteBefore: '2019-05-01T00:00'
     - deleteAge: 3600
+    - concurrency: 1
     - dryRun: true
 
   output:
@@ -46,33 +45,90 @@ cleanup_cflash:
     result: failed
 
   tasks:
-    getEnvironment:
-      action: environment
-      publish:
-        env: '<% task().result %>'
-      on-success:
-        getNodeTime
-
-    getNodeTime:
-      action: nsp.sr_cli
+    checkHost:
+      action: std.http
       input:
-        host: '<% $.host %>'
-        username: '<% $.env.neUsername %>'
-        password: '<% $.env.nePassword %>'
-        cmd: show time
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - getNodeTimeMDM: <% $.hosttype = 'mdm' %>
+        - getNodeTimeNFMP: <% $.hosttype = 'nfmp' %>
+
+    getNodeTimeMDM:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!classic-cli
+          - show time
       publish:
         nodeTime: <% task().result %>
       on-success:
-        - readDirectories
+        - readDirectoriesMDM
 
-    readDirectories:
-      with-items: dir in <% $.dirs %>
-      action: nsp.sr_cli
+    getNodeTimeNFMP:
+      action: std.http
       input:
-        host: '<% $.host %>'
-        username: '<% $.env.neUsername %>'
-        password: '<% $.env.nePassword %>'
-        cmd:
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
+          - show time
+      publish:
+        nodeTime: <% task().result %>
+      on-success:
+        - readDirectoriesNFMP
+
+    readDirectoriesMDM:
+      with-items: dir in <% $.dirs %>
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!classic-cli
+          - environment no more
+          - file dir <% $.dir %>
+      publish:
+        dirResults: <% task().result %>
+      on-success:
+        - applyFilter
+
+    readDirectoriesNFMP:
+      with-items: dir in <% $.dirs %>
+      action: std.http
+      input:
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
           - environment no more
           - file dir <% $.dir %>
       publish:
@@ -133,39 +189,39 @@ cleanup_cflash:
       publish:
         fileList: <% task().result %>
       on-success:
-        - deleteFiles: <% $.dryRun != true %>
+        - deleteFilesMDM: <% dryRun != true and $.hosttype = 'mdm' %>
+        - deleteFilesNFMP: <% dryRun != true and $.hosttype = 'nfmp' %>
 
-    deleteFiles:
+    deleteFilesMDM:
       with-items: file in <% $.fileList %>
-      action: nsp.sr_cli
+      concurrency: <% int($.concurrency) %>
+      action: nsp.mdm_cli
       input:
-        host: '<% $.host %>'
-        username: '<% $.user %>'
-        password: '<% $.passwd %>'
-        cmd: file delete <% $.file %> force
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!classic-cli
+          - file delete <% $.file %> force
       publish:
         cliResponse: <% task().result %>
-      on-success:
-        - chkResponses
 
-    chkResponses:
-      action: std.javascript
+    deleteFilesNFMP:
+      with-items: file in <% $.fileList %>
+      concurrency: <% int($.concurrency) %>
+      action: std.http
       input:
-        context: <% $ %>
-        script: |
-          var cliResponse = $.cliResponse;
-          var status = false;
-          cliResponse.forEach(function(cmd){
-            for (var key in cmd) {
-              if (!(cmd[key][1].endsWith("OK"))) {
-                status = true;
-              }
-            }
-          });
-          return status
+        url: <% locate_nsp("samo_netw") %>/v2/netw/NetworkElement/executeMultiCli/network%3A<% $.neId %>
+        method: PUT
+        verify: false
+        headers:
+          Accept: 'application/json'
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
+          - file delete <% $.file %> force
       publish:
-        cliCheckFailed: <% task().result %>
-      on-success:
-        - fail: <% $.cliCheckFailed %>
+        cliResponse: <% task().result %>
 
 ...

@@ -1,4 +1,3 @@
----
 version: '2.0'
 
 setup_SSH_campaign:
@@ -11,7 +10,8 @@ setup_SSH_campaign:
 
   workflow_meta:
     title:   Enable SSH using auth-keys
-    author:  NOKIA NSM
+    author:  NOKIA DEMO
+    signature: 0dd2a4437ba5eda9595b0e305f55e18bd5cfdfd0143a698a62aef1e8ac5ddb8ba7e8b281344160f241f4dacc8e0c3646aa3eb5b846140c6ac821d702ab1bd349a0fd00645ac65ef28e46ba38d9593f554d7eb73d18c8538ff3de362de7f99c251ccccb4b62747778b7947f04cfbea51a62a1da2080d0b386aea866c2c6dad1040e547410425b8b19ccb677674173152a7d68decbadec6b1efe214360df2984ccb52d51ee39237acd05440674212b9ebb591742dc42a86adede575b8454b73a50b29363bb2b0c1d198ebbeb355d2e677e448d626e2ba05af91050353ea25ebf071f7603cd67ae7555d096469da4c3adaf092dd37a323e13e3c120c1bdf6a91466
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -31,12 +31,8 @@ setup_SSH_campaign:
 
   input:
     - token_auth:
-    - rest_gateway : localhost
-    - server:
-        host: localhost
-        username: root
-        password: changeme
-    - sshuser: nspuser
+    - workflow: addUser
+    - sshUsername: nspuser
     - concurrency: 1
 
   output:
@@ -46,10 +42,10 @@ setup_SSH_campaign:
     result: failed
 
   tasks:
-    get_targets:
+    getHosts:
       action: std.http
       input:
-        url: https://<% $.rest_gateway %>:8544/NetworkSupervision/rest/api/v1/networkElements?filter=product='7750 SR'
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=product='7750 SR'
         method: GET
         verify: False
         headers:
@@ -58,19 +54,14 @@ setup_SSH_campaign:
       publish:
         neInventory: <% task().result.content.response.data %>
       on-success:
-        - execute
+        - createExecutions
 
-    execute:
+    createExecutions:
       with-items: host in <% $.neInventory %>
       concurrency: <% int($.concurrency) %>
-      workflow: setup_SSH
+      workflow: <% $.workflow %>
       input:
-        server: <% $.server %>
-        sshuser: <% $.sshuser %>
-        node:
-          host: <% $.host.ipAddress %>
-          neId: <% $.host.neId %>
-          username: admin
-          password: admin
+        neId: <% $.host.neId %>
+        sshUsername: <% $.sshuser %>
 
 ...

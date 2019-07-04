@@ -1,5 +1,5 @@
 ![NOKIA](https://raw.githubusercontent.com/nokia/nsp-workflow/master/logo.png)
-# Nokia NSP Workflow Manager Blueprints
+# NSP WFM Demo
 ## 7x50 Setup Telemetry
 
 ### Description

@@ -1,17 +1,17 @@
 version: '2.0'
 
-setupNE_day0_snmpv3:
+commissionNE_snmpv3:
   type: direct
 
-  description: SetupNE Day 0 (using SNMPv3)
+  description: Commission 7x50 (onboarding day 0, using SNMPv3)
 
   tags:
     - demo workflow by NOKIA
 
   workflow_meta:
-    title:   7750SR Device Commissioning with SNMPv3
+    title:   7x50 Device Commissioning with SNMPv2
     author:  NOKIA DEMO
-    signature: 952e4360d40f4330339d9175f44542534e798a2fe3800ed418c5029b50cf698dd1a9b0725060b9b87ae2160685713e7ffa0ee4866a9365cdf9c4c78e71d4a0ff46b017eca37b4a0ee2ea40244d211acdab8c15638d0a3a7805fc9fa9efb61889a1c18f28cebec93b422388562b983c46b51dcd9ca3cf41b46bcd12095b3b6ebe52e872e11c40be1feb03858b1f8ec9b9d3b40b7fd13fe2378c2f0020f5508b063f82d0101529bc136ef7533016e603fafe8d42a456ba2e430d9bf88374c0eb3d1362f9d4a7806ed6a479f3f3b3172b4e9a06866a9c9a8044f91d156fae5c7047fd66b8a9efbb0610e40f87c525ea674f601d1632601ba728e7c7d89a16e45aac
+    signature: 837b685b52743fd5688824ae71046f670aa87aa4f552aef1ce8bdb02001a1705b894f9c184bd343d551cfc3bff5ed615d3e25736466bf7a8a8ed96b7acd10944a3833b80c1d9168e2c693d12b51a8bc1cd34a83fa9d8ee2b03d386e8c587e8895201bdb9645053d70c0226de75bea13705c87092a985448e57ba6a2188959769d9f25df37fc25e506cfc8f3951ef8d869a0693af4fed51b23b1da6323ae244bbeb4e98f5f10473a1926cb8e1a8a9741d66349f9d044df5c3c7060997e08fd9448e5cd7c3424f2fcf1f048701a8297314161170ebb6d26af8cefc702b1282bfc2d5c65c9d462a92f413be0929772478575cbd307455c3de78186448688e73746b
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -22,7 +22,7 @@ setupNE_day0_snmpv3:
     - mgmtIP:
     - systemIP:
     - neName:
-    - snmpUser: nsp
+    - snmpUsername: nsp
     - snmpPassword: topSecret
 
   output:
@@ -78,9 +78,9 @@ setupNE_day0_snmpv3:
           - configure system snmp no shutdown
           - configure system snmp packet-size 9216
           - configure system security snmp access group nspgrp security-model usm security-level privacy read "iso" write "iso" notify "iso"
-          - configure system security user <% $.snmpUser %> access snmp
-          - configure system security user <% $.snmpUser %> snmp group nspgrp
-          - configure system security user <% $.snmpUser %> snmp authentication md5 <% $.snmpkey %> privacy des-key <% $.snmpkey %>
+          - configure system security user <% $.snmpUsername %> access snmp
+          - configure system security user <% $.snmpUsername %> snmp group nspgrp
+          - configure system security user <% $.snmpUsername %> snmp authentication md5 <% $.snmpkey %> privacy des-key <% $.snmpkey %>
           - configure system netconf no shutdown
           - configure system netconf auto-config-save
           - configure system security user "admin" access console netconf

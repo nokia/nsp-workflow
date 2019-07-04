@@ -1,17 +1,17 @@
 version: '2.0'
 
-setupNE_day0:
+commissionNE:
   type: direct
 
-  description: SetupNE Day 0 (using SNMPv2)
+  description: Commission 7x50 (onboarding day 0, using SNMPv2)
 
   tags:
     - demo workflow by NOKIA
 
   workflow_meta:
-    title:   7750SR Device Commissioning with SNMPv2
+    title:   7x50 Device Commissioning with SNMPv2
     author:  NOKIA DEMO
-    signature: 21657805e35b0b4fa7f8f544987eaf1496a8696504afd1a67054506a8c46328dd31d3a384d34c31fea341281431e22fc8012890bb4144be0e888518daee73b8bac1892c876ba881c586aee8c407146473198e22dfda3cbb0896c307954551ddd4b26de9966211cce515bebdbc884508b68405c2b001f21671e66a90ede7a3eea4862dd483baf4b8e64dde853b32c8a2a967a77554e123ccbe5b74402d3ef5d9b00ea8a2a27a20469881524fe759c949e2424df81f5cac8c45a96cbc79b24a5b75a35ad89f0275c3675591101e1133b3c83e00d5bd48676512aa402b176c5d936bba33303cf93ce057c0af694cbcefbfccd187316c29c6b859051c4d4b5a14672
+    signature: 63ed7d1db0a5196acec811644afa79c3f77878a855be480f3ca327e09c0632b55123a3e1227d7f32181a611c207dd841b56d212c03f8f3996fed3e3f4537bacfdef25e63fc0423befebcd23fb7e9b621dd3a110a017559ce75f5045877165a39f638d5da46999e99fe29b995d0dae580c943499525f0d236ebce58646381907b6143dda006a38c39cc54224a9a24985039811a33a97b86d1c62fd410bcb03d17ded796b4b62898ee60c2cf0cae199080b6ecaa2452d4a77a28f7af6afc4dab7343791e07fdd30eae46f0f0e54323c960d902411cae614abce2a7205c51c3f1d9fd47c4fc1764a5bf1eb6dda7071aef3af7a20bd40cb8756166306d7051159e6e
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
