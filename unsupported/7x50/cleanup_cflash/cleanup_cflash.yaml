@@ -17,19 +17,19 @@ cleanup_cflash:
     package: SROS Automation
     deprecated: false
     urls:
-      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/cleanup_cflash
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/cleanup_cflash
       repository: https://github.com/nokia/nsp-workflow
       bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
       platform:
-        nspOS: ['18.12', '19.*']
-        nfmp: []
+        nspOS: ['19.6']
       nodal:
         - type: 'Nokia 7x50'
-          releases: ['14.0', '15.*', '16.0']
-          mgmtmode: ['classic']
+          releases: ['19.5']
+          mgmtmode: ['classic', 'model-driven']
 
   input:
+    - token_auth:
     - host:   138.120.48.245
     - user:   admin
     - passwd: admin
@@ -46,12 +46,19 @@ cleanup_cflash:
     result: failed
 
   tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        getNodeTime
+
     getNodeTime:
       action: nsp.sr_cli
       input:
         host: '<% $.host %>'
-        username: '<% $.user %>'
-        password: '<% $.passwd %>'
+        username: '<% $.env.neUsername %>'
+        password: '<% $.env.nePassword %>'
         cmd: show time
       publish:
         nodeTime: <% task().result %>
@@ -63,8 +70,8 @@ cleanup_cflash:
       action: nsp.sr_cli
       input:
         host: '<% $.host %>'
-        username: '<% $.user %>'
-        password: '<% $.passwd %>'
+        username: '<% $.env.neUsername %>'
+        password: '<% $.env.nePassword %>'
         cmd:
           - environment no more
           - file dir <% $.dir %>
