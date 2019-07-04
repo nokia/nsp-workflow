@@ -11,7 +11,7 @@ addUser:
   workflow_meta:
     title:   Add CLI user to a node
     author:  NOKIA DEMO
-    signature: 90f0ee6e5c0a2c5dc43cd54cb124a8059da8aed2fadb0cc4ef5aae21c093258ffcb75eed4728bd358834ad4863ac3819524d709256ca982e7c8fafca566a2171ebbf9d9f9637c992315b45ee1e6090f72ca8fe7a9c5c67b06e34cfb72ba5511055a74d02cffc3b6d88d351fd9846ee11a04050d8c983e9801d4b27e586628db9dcc9d8628d0e4338058952faae89a7ee429bb03e0692b6da9acc3afd80fea5100ab59e340b4ad51dd025308f0d7ed147c85c2682c17f0d66dcac1c6d3e74fd33dcad6034ec230730da6c15aafda8b29d2eaddcfbcc2bac3233967be96857c6b12f89090f226017bb1767ceb92e15f4b4ff9bb8e9af622c231f21fb6d1c925cd0
+    signature: 4ec5c53223a1236cee0c2a72073bf91c3a4d63cc3f5bb98dd8c34b18b380548eee5ad5ebe0498d595f9c22c6659322f31014a6bff4909eaaffc99b55e7b4452eb4a00aec2ff0ff44e70c0fad95364eabfbee19f9922900a9a9db82e604706ce7e35d7ca206d54d1a4382ff4af8b1d4332858c289319a7f741399af72d2de2f392009beace8c24f8e29ccee9f54159a9c4c7a33c3b0ded03222c97523da3494fbca442c51541e1952f901e4b8834038c4b34613033bb13c1b0bd47307ccf7bbeb2b2b5a7f28c394894bace4d13ec80a851242344dafbf08d58ab3b009bcfa6528ebf013cc09c01999822de204964b76da7fdc6b44e378175aba6c8f611aa466e0
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -88,7 +88,7 @@ addUser:
     addSSHUserMDM:
       action: std.http
       input:
-        url: https://<% $.env.mdcServer %>:<% $.env.mdcPort %>/restconf/data/network-device-mgr:/network-elements/network-element=<% $.neId %>/root/nokia-conf:/configure/system/security/user-params/local-user/user=<% $.sshUsername %>
+        url: https://<% $.env.mdcServer %>:<% $.env.mdcPort %>/restconf/data/network-device-mgr:network-devices/network-device=<% $.neId %>/root/nokia-conf:configure/system/security/user-params/local-user/user=<% $.sshUsername %>
         method: PUT
         verify: False
         headers:
@@ -96,19 +96,19 @@ addUser:
           Accept: application/yang-data+json
           Content-Type: application/yang-data+json
         body:
-          user-name: '<% $.sshUsername %>'
-          password: 'NokiaNsp1!'
-          console:
-            member:
-            - default
-            - administrative
-          access:
-            console: true
-          public-keys:
-            rsa:
-              rsa-key:
-              - rsa-public-key-id: 1
-                key-value: <% $.rsakey %>
+          nokia-conf:user:
+          - user-name: <% $.sshUsername %>
+            password: 'NokiaNsp1!'
+            console:
+              member:
+              - administrative
+            access:
+              console: true
+            public-keys:
+              rsa:
+                rsa-key:
+                - rsa-public-key-id: 1
+                  key-value: <% $.rsakey %>
 
     addSSHUserNFMP:
       action: std.http
