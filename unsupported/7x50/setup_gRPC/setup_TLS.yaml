@@ -1,3 +1,4 @@
+---
 version: '2.0'
 
 setup_TLS:
@@ -11,13 +12,12 @@ setup_TLS:
   workflow_meta:
     title:   Setup TLS with certificates on Nokia SROS nodes
     author:  NOKIA DEMO
-    signature: 4861f88eb50a3aa6989cbdb536d69e1a43fa595e6e1970e9308fd20a59189469ed84b09e5194c832d735a2d4b3a0f3823bea5147ee9b14dc7ec192e485e45ca85264e9281ca58187311fa6b568e4a15de1f55e4dea271ae120c8476fa052b667fbfd718b52f0c0c133d41d0aece36587cad6be2d1d5e862eb9bf33da9af52f282d900f76af3e0e0a296f7f9a351a30be360a17a68b9a6454115e902e67126a1ad6695f0f68938c5fda315320e73b20981b3f0a46629191a0783ee72fdc3864027dfac4946fdc2995b9092e1d76300c9a5e33ba89d607f61ae7e8f45ff8c55a63a99c803f571a3045b86bf9eea6610b5f98fb117316bc22834bae757640368034
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
     deprecated: false
     urls:
-      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/setup_TLS
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/setup_gRPC
       repository: https://github.com/nokia/nsp-workflow
       bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
@@ -25,7 +25,7 @@ setup_TLS:
         nspOS: ['19.6']
       nodal:
         - type: 'Nokia 7x50'
-          releases: ['16.0', '19.*']
+          releases: ['19.5']
           mgmtmode: ['classic', 'model-driven']
 
   input:

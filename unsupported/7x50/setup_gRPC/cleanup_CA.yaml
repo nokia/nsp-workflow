@@ -1,3 +1,4 @@
+---
 version: '2.0'
 
 cleanup_CA:
@@ -9,18 +10,21 @@ cleanup_CA:
   workflow_meta:
     title:   Cleanup PKI/CA
     author:  NOKIA DEMO
-    signature: 4af76f60b7e3e724f1c57478be529578e9d77e06129b28ed20a944da02dea1d5703d34f32af9ddf2133e0e056c628a36ebea8266e24139cbf5375f463eba4540010d119050ed36d3fd190cf7f4ccd629cfc3f9bae11bda1681476bca1b929ebc7d3cf80469e7641d326b008dab09cf9422b07f7f5f666d872f1716620b88848652bd6b9a1d148e2e046b99ad12a9efd3c50a26c1c5fabd537fe0e15e9dba14e900619306a5557f604007f6bbd77b20ad3d767e9232c68ca6ffbb70c32d398a62e724ff7e13676c5b8958bef176f6dde3359f019460729e203f381256527ce142d752eb0719574b69ab5c6908264858abf827835c1cdfa5ee874dd4e2dee599f2
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
     deprecated: false
     urls:
-      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/setup_TLS
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/setup_gRPC
       repository: https://github.com/nokia/nsp-workflow
       bugs: https://github.com/nokia/nsp-workflow/issues
     dependencies:
       platform:
         nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5']
+          mgmtmode: ['classic', 'model-driven']
 
   output:
     result: done
