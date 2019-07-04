@@ -11,7 +11,7 @@ delUser:
   workflow_meta:
     title:   Delete CLI user from a node
     author:  NOKIA DEMO
-    signature: 01d90d1a7eed57f104cdcc94ca488d51192dad756481ac02053a7448c4a3d14a947ad996528cb8dab2e6e676f631349152fc3281878bcf7179009f0abb77b23683ef21f752e37dc266581497865807bf82a3bcf5fb8d861414ce2d3c9aebae02c9856a9d28a93e410e90d0e0e5f07d19b84d6ce34353c78cd92283d192d6da3c40fda74ebbb5df7668d0a14578803684505af56dc705d7d36f16e0ceeb2908fc3a6bc6259ed252b010302f9e865525743c9c6b482f0fb41e17ab787cbbd7bf743cd5b78609f95d7d52f2e4776dcdabd9a9e7c2259d3cae07b51241a9c0df4443f6c1ff1b7ad645f6dafbd34e3fbf5e5addb2130936c33c571441b4a6dfc345c2
+    signature: 7e8538f9ef93c161d797d757d9b6d6ce9491323a8578ee5631cd63ee881124c65efecef295ed1e5d3e503be5bf9c0b793778885223463f4b5597b3de741c1cac87c5bef8acb93afc6ae39af0eb8f655034999cfcd3e935ded3965ae23e6fed135a3384a854a038025fbe7b7cfa032e3c52910b349bc618a2d8951dae0b08174f499d232a7dec7d6d1c50362f04cd55c4ed4f898c07f285b803a0d89ecd4c8d7898b8136255097f4e0bd84575032f2b227d472ff37e0f049ed58c66e0e98f96f6987b8c65387f9d632ccdc48c4e693fae55990b258fc9e07f6b3d3bd5a9ea8d92037c6723fdc4fd368a5fa43e21380f9a161e4062fa75fe46beb34953946e7382
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -81,10 +81,10 @@ delUser:
         verify: False
         cmds:
           - /!md-cli
-          - configure private
-          - system security user-params local-user
-          - delete user <% $.sshUsername %>
+          - edit-config global
+          - configure system security user-params local-user delete user "nspuser"
           - commit
+          - quit-config
       publish:
         status: <% task().result %>
 
