@@ -1,0 +1,75 @@
+version: '2.0'
+
+setupNE_day0:
+  type: direct
+
+  description: SetupNE Day 0 (using SNMPv2)
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   7750SR Device Commissioning with SNMPv2
+    author:  NOKIA NSM
+    signature: 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000099978f8bf81169ea7e4b3f124286b9fdada27403ed561cddbcdbbfd9cb19bce847a5e68b61fc89dadcc2cc189d6aaa5373c15e867578db145c83c57daf0804d4521b53aaab49e0b029f9ea0d20d866449ee2b528ae8dd360e120bd2461e26f1f7f932539df52d4a79d56294dc395c5719dcd0cd1f46168e0080a45b27cbe0887
+    version: '1.0.0'
+    license: BSD-3
+    package: SROS Automation
+    deprecated: false
+
+  input:
+    - token_auth:
+    - mgmtIP:
+    - systemIP:
+    - neName:
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    configure_node_classic:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!classic-cli
+          - configure system name "<% $.neName %>"
+          - configure router interface "system" address <% $.systemIP %>/32
+          - configure system security ssh preserve-key
+          - configure system snmp no shutdown
+          - configure system snmp packet-size 9216
+          - configure system security snmp community private rwa version both
+          - configure system security snmp community privatetrap98 rwa version both
+          - configure system netconf no shutdown
+          - configure system netconf auto-config-save
+          - configure system security user "admin" access console netconf
+          - configure system security profile "administrative" netconf base-op-authorization lock
+          - admin save
+          - configure system management-interface configuration-mode model-driven
+          - sleep 1
+      publish:
+        status: <% task().result %>
+      on-success:
+        - configure_node_md
+
+    configure_node_md:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!md-cli
+          - configure private
+          - system management-interface yang-modules base-r13-modules false
+          - system management-interface yang-modules nokia-modules false
+          - system management-interface yang-modules nokia-combined-modules true
+          - system management-interface yang-modules openconfig-modules true
+          - commit
+
+...

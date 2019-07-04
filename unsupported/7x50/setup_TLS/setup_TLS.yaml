@@ -11,7 +11,7 @@ setup_TLS:
   workflow_meta:
     title:   Setup TLS with certificates on Nokia SROS nodes
     author:  NOKIA DEMO
-    signature: 91c13816ccb73de36150d7a229e5346d21f2dd0497532a26be91e30d7223fca2035f939cb7ced71a25c031a44adf36bd499e999e519dfc365e7c4d73200f223d0a0ba16b629203c2713f81ba3bbc8ab2441908b887c409db148d57f89fb0079f2a145d61c34017e1f026e21a6e7a7a16a94904a62d5c03a312128cd78e7336abe722fc29b901519bb9b94df32ca5025658571228ee4c03511e3351758be93169d7f2742631ffeac8f7dfd92014227de2b6cb62788622e54e87f3535b849f9f3d2d53838c35076b6adac980ddeedaa94b86a470b45c2a04740c1ffdadbde93b15582ea713724d86303095f324cd586fbed098029e8395d0f657be03676ca9063b
+    signature: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000460558f9445acd0e440668d39d44a074eebdf71b7a2d41bfd07f3b6e730681543dd0622c6715e0be55968f91f2b5a5e7e1704dbbff2fca4b47668f20733bf86541e79ae8de40d04ca0fa1ff569d4ffa90665c88cf9fc4eba5df4d93d5337e83649dd7049a4369ef798d25bff489892fd01c73bad64e65be4b60e19333cec4337
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -75,12 +75,12 @@ setup_TLS:
     checkCaCertificate:
       action: std.ssh
       input:
-        host: '<% $.env.pki_host %>'
-        username: '<% $.env.pki_user %>'
-        password: '<% $.env.pki_password %>'
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
         cmd: |
           cd /opt/nsp/os/ssl/certs/telemetry
-          /opt/nsp/os/jre/bin/keytool -list -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pki_storepass %>'
+          /opt/nsp/os/jre/bin/keytool -list -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pkiStorepass %>'
       on-error:
         - initializeCA
       on-success:
@@ -89,9 +89,9 @@ setup_TLS:
     checkHostCertificate:
       action: std.ssh
       input:
-        host: '<% $.env.pki_host %>'
-        username: '<% $.env.pki_user %>'
-        password: '<% $.env.pki_password %>'
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
         cmd: |
           cd /opt/nsp/os/ssl/certs/telemetry
           openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
@@ -105,9 +105,9 @@ setup_TLS:
     reissueHostCertificate:
       action: std.ssh
       input:
-        host: '<% $.env.pki_host %>'
-        username: '<% $.env.pki_user %>'
-        password: '<% $.env.pki_password %>'
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
         cmd: |
           cd /opt/nsp/os/ssl/certs/telemetry
           cp -f <% $.hostname %>_cert.pem <% $.hostname %>_cert.pem.bak
@@ -118,8 +118,8 @@ setup_TLS:
           openssl req -out <% $.hostname %>_certreq.pem -key private/<% $.hostname %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.hostname %>/emailAddress=nobody@nokia.com"
           openssl ca  -out <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.host %>") -infiles <% $.hostname %>_certreq.pem
           openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
-          curl --insecure --user <% $.env.NEuser %>:<% $.env.NEpasswd %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
-          curl --insecure --user <% $.env.NEuser %>:<% $.env.NEpasswd %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
       publish:
         exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
       on-success:
@@ -158,9 +158,9 @@ setup_TLS:
       join: 1
       action: std.ssh
       input:
-        host: '<% $.env.pki_host %>'
-        username: '<% $.env.pki_user %>'
-        password: '<% $.env.pki_password %>'
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
         cmd: |
           mkdir /opt/nsp/os/ssl/certs/telemetry
           cd /opt/nsp/os/ssl/certs/telemetry
@@ -175,7 +175,7 @@ setup_TLS:
           openssl x509 -outform der -in CAcert.pem -out CAcert.der
           unalias cp
           cp -f /opt/nsp/os/ssl/nsp.truststore /opt/nsp/os/ssl/nsp.truststore.bak
-          echo -e "y" | /opt/nsp/os/jre/bin/keytool -import -alias myTelemetryCa -keystore /opt/nsp/os/ssl/nsp.truststore -file /opt/nsp/os/ssl/certs/telemetry/CAcert.der -storepass '<% $.env.pki_storepass %>'
+          echo -e "y" | /opt/nsp/os/jre/bin/keytool -import -alias myTelemetryCa -keystore /opt/nsp/os/ssl/nsp.truststore -file /opt/nsp/os/ssl/certs/telemetry/CAcert.der -storepass '<% $.env.pkiStorepass %>'
       on-success:
         - copyCaCertificatesToNode
 
@@ -183,30 +183,30 @@ setup_TLS:
       join: 1
       action: std.ssh
       input:
-        host: '<% $.env.pki_host %>'
-        username: '<% $.env.pki_user %>'
-        password: '<% $.env.pki_password %>'
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
         cmd: |
           cd /opt/nsp/os/ssl/certs/telemetry
-          curl --insecure --user <% $.env.NEuser %>:<% $.env.NEpasswd %> -T CAcert.pem sftp://<% $.host %>/cf3:/
-          curl --insecure --user <% $.env.NEuser %>:<% $.env.NEpasswd %> -T CAcrl.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcert.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcrl.pem sftp://<% $.host %>/cf3:/
       on-success:
         - createHostCertificate
 
     createHostCertificate:
       action: std.ssh
       input:
-        host: '<% $.env.pki_host %>'
-        username: '<% $.env.pki_user %>'
-        password: '<% $.env.pki_password %>'
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
         cmd: |
           cd /opt/nsp/os/ssl/certs/telemetry
           openssl genrsa -out private/<% $.hostname %>_key.pem 2048
           openssl req -out <% $.hostname %>_certreq.pem -key private/<% $.hostname %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.hostname %>/emailAddress=nobody@nokia.com"
           openssl ca  -out <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.host %>") -infiles <% $.hostname %>_certreq.pem
           openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
-          curl --insecure --user <% $.env.NEuser %>:<% $.env.NEpasswd %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
-          curl --insecure --user <% $.env.NEuser %>:<% $.env.NEpasswd %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
       publish:
         exp_old: none
         exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>

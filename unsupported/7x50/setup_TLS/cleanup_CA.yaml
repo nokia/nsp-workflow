@@ -9,7 +9,7 @@ cleanup_CA:
   workflow_meta:
     title:   Cleanup PKI/CA
     author:  NOKIA DEMO
-    signature: 164d361ec1ec016d43a0ea1301dd896a18cd07724a88d9150c3284fddc91d7bd5b73c5e85834c71638735454f7cbc0e90f2f2ecea5b89cb21b3247667308d98eebd735f1d4a12c2f24dab07c0830a8bf5c0868d53a598cb4ed2855f9b8fd4ba0bbf63310190ec91ba8dd105f5d1b2c75b5484c41168dfb6386d6919a76ba75a0dd1b93345cfe56b3088b7c6d04ab272de3e93ed186722291ad78e362986bf75d02fe52aaa4158257dce034c25c7292965f424699fafafe36730c9db780d88e777c301e61541e97029b2c6532c8947751d9e6ea70bf2aa37897e242da52e87f09291bf2f58334adb721f35dd2b612ff8bb39152c32b4a488d7fa8b63f138b66fe
+    signature: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008be7e1eb899abee2751a53d596c9b2760effb8dcc5410b91ad62107852085b4cbc988ead7269dd2facbf2e897cc2ae7c67ee57407bd5d486cae3fa0a711a40d629bd08645fdac0302fe27deb4d84b24fcb4cc28194fec325e39f50a395771dab8c77cfb214ed317f6f418f95472a6f0a85fa377e72ce6262b3e3b3232b16aaeb
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -39,11 +39,11 @@ cleanup_CA:
     cleanup:
       action: std.ssh
       input:
-        host: '<% $.env.pki_host %>'
-        username: '<% $.env.pki_user %>'
-        password: '<% $.env.pki_password %>'
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
         cmd: |
-          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pki_storepass %>'
+          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pkiStorepass %>'
           cd /opt/nsp/os/ssl/certs
           rm -rf telemetry
           rm /etc/pki/CA/index.txt

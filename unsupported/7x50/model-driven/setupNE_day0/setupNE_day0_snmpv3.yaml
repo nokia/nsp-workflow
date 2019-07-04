@@ -1,0 +1,110 @@
+version: '2.0'
+
+setupNE_day0_snmpv3:
+  type: direct
+
+  description: SetupNE Day 0 (using SNMPv3)
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   7750SR Device Commissioning with SNMPv3
+    author:  NOKIA NSM
+    signature: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000793b38bd644db59411f4c943ac21943c51dbf883618c08624d5156fd06affb53d7c1af2bfca634b561165e692a94167d4650fe2e162e28150908c723f6038ea6a8adbbbbf08832a31a98624dadbb599b33f727dd34d14d84f699082cd247273d462e9f1b7d1202d7e39bf02c941281ebcbd4b44b85ea6e2b36b0e75300d7d4e
+    version: '1.0.0'
+    license: BSD-3
+    package: SROS Automation
+    deprecated: false
+
+  input:
+    - token_auth:
+    - mgmtIP:
+    - systemIP:
+    - neName:
+    - snmpUser: nsp
+    - snmpPassword: topSecret
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        get_engine_id
+
+    get_engine_id:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - show system information | match "Engine ID"
+      publish:
+        engineId: <% regex(".*\s:\s(.*)").replace(task().result[ "cmd1-show system information | match \"Engine ID\""][1], "\\1") %>
+      on-success:
+        - password2key
+
+    password2key:
+      action: std.ssh
+      input:
+        host: '<% $.env.mdmServer %>'
+        username: '<% $.env.mdmUsername %>'
+        password: '<% $.env.mdmPassword %>'
+        cmd: |
+          sudo -H -u nsp /opt/nsp/mediation/bin/password2key.bash md5 <% $.snmpPassword %> <% $.engineId %>|grep MD5
+      publish:
+        snmpkey: <% regex("\s*MD5 key:\s+(\S+)\n").replace(task().result, "\\1") %>
+      on-success:
+        - configure_node_classic
+
+    configure_node_classic:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - configure system name "<% $.neName %>"
+          - configure router interface "system" address <% $.systemIP %>/32
+          - configure system security ssh preserve-key
+          - configure system snmp no shutdown
+          - configure system snmp packet-size 9216
+          - configure system security snmp access group nspgrp security-model usm security-level privacy read "iso" write "iso" notify "iso"
+          - configure system security user <% $.snmpUser %> access snmp
+          - configure system security user <% $.snmpUser %> snmp group nspgrp
+          - configure system security user <% $.snmpUser %> snmp authentication md5 <% $.snmpkey %> privacy des-key <% $.snmpkey %>
+          - configure system netconf no shutdown
+          - configure system netconf auto-config-save
+          - configure system security user "admin" access console netconf
+          - configure system security profile "administrative" netconf base-op-authorization lock
+          - admin save
+          - configure system management-interface configuration-mode model-driven
+          - sleep 1
+      publish:
+        status: <% task().result %>
+      on-success:
+        - configure_node_md
+
+    configure_node_md:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!md-cli
+          - configure private
+          - system management-interface yang-modules base-r13-modules false
+          - system management-interface yang-modules nokia-modules false
+          - system management-interface yang-modules nokia-combined-modules true
+          - system management-interface yang-modules openconfig-modules true
+          - commit
+...
