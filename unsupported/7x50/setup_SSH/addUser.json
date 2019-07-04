@@ -3,7 +3,7 @@
   "properties": [
     {
       "name": "neId",
-      "description": "Node to enable gRPC on.",
+      "description": "Node to add SSH user.",
       "title": "NE Id",
       "readOnly": false,
       "columnSpan": 4,

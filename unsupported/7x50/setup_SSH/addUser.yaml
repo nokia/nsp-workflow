@@ -11,7 +11,7 @@ addUser:
   workflow_meta:
     title:   Add CLI user to a node
     author:  NOKIA DEMO
-    signature: 7863b725f84a69b29c3d2ea47927999df54133c2454f779daf37df2346c333d9d31ee2ec0a96efaf497f94171067c6a31b6165356b74c11d310e72514205bcfe773673a8631bfda7627991ccf50df7bc241b254a3989bfac9c9fed497af8a5ed399c181a176eead78289e5fb82059783709f68542e4a66d52ee7cbd6e62097cbcf6818b99a196ee871948674f32d0e80a1a5f12bcf5f13087ac71d32482503eef6b5270c5a8c531f6046a91c8a0ebd4483f216e7a376cbbc98ffbefd53f53ff465c3fd8aca1ca896d3ffe57a71fb093f2ea4bd89419db5ad6dfee685a73141d78d58cdbe4671a242466eaa57071ab5d52f15bfd9b70a682f314a61305340ba5f
+    signature: 90f0ee6e5c0a2c5dc43cd54cb124a8059da8aed2fadb0cc4ef5aae21c093258ffcb75eed4728bd358834ad4863ac3819524d709256ca982e7c8fafca566a2171ebbf9d9f9637c992315b45ee1e6090f72ca8fe7a9c5c67b06e34cfb72ba5511055a74d02cffc3b6d88d351fd9846ee11a04050d8c983e9801d4b27e586628db9dcc9d8628d0e4338058952faae89a7ee429bb03e0692b6da9acc3afd80fea5100ab59e340b4ad51dd025308f0d7ed147c85c2682c17f0d66dcac1c6d3e74fd33dcad6034ec230730da6c15aafda8b29d2eaddcfbcc2bac3233967be96857c6b12f89090f226017bb1767ceb92e15f4b4ff9bb8e9af622c231f21fb6d1c925cd0
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -88,7 +88,7 @@ addUser:
     addSSHUserMDM:
       action: std.http
       input:
-        url: https://<% $.env.mdcServer %>:<% $.env.mdcPort %>/restconf/data/network-device-mgr:/network-elements/network-element=<% $.node.neId %>/root/nokia-conf:/configure/system/security/user-params/local-user/user=<% $.sshUsername %>
+        url: https://<% $.env.mdcServer %>:<% $.env.mdcPort %>/restconf/data/network-device-mgr:/network-elements/network-element=<% $.neId %>/root/nokia-conf:/configure/system/security/user-params/local-user/user=<% $.sshUsername %>
         method: PUT
         verify: False
         headers:
