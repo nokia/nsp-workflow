@@ -1,4 +1,3 @@
----
 version: '2.0'
 
 setup_TLS:
@@ -12,6 +11,7 @@ setup_TLS:
   workflow_meta:
     title:   Setup TLS with certificates on Nokia SROS nodes
     author:  NOKIA DEMO
+    signature: 65399478ca8b672daad02b258141c11cfc6390a6f93ec220b387929beafb47fb33931b36e787a5ddf0c0abac251e4301dbdeef40a26d0ff8bd66f202eccb08936c7f0da04dd9183d0db2bcde9fbeb6397f5964f42ac4b1d0d782dca793cf67ee7ffd61d7c15265fea01588415dbebe0de1ac07b3ddff3143f1e1169c612580926167e9426118a04d415865d9a9924a6dd39010b0575a6ea3fcd04ac5ccbfbce20b5dda8e9203629134e87e2f7fbf853115d423eba78620f96a2de65c4533686957e093bd744d8a6466b11d98350208c8a2c1ef77345cbfc9f355bb0420295ab6db6d57fc0277c3e0b4ccf7c922f5ca7723886bac5b7e188ad6c13428ff669a90
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
