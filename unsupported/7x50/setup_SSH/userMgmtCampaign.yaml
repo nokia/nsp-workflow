@@ -11,7 +11,7 @@ setup_SSH_campaign:
   workflow_meta:
     title:   Enable SSH using auth-keys
     author:  NOKIA DEMO
-    signature: 58f1f56770566b930faf18a31da5001530ff3069db9beb59cb50c11362013f6aa1e4ef844cbeee21edf257f4d6b02b2b3117b5a8c29949890abda2fbb50d02a68c58547d3e51dfff9590efd3478d644a220d149139059c78bcbeb1c3871940cf0326f61da97032dd04f4fa218664d7d14f570b0eceaf45c9b95c5283405b5424d176ca89a706bfc6b6c65c21bcb0152e8ae72256d2f7cfec31922f4a84b19a7951c7ed07febaa19bfc2c6f4a5cb72f7c61471962aa3d35c5b414ba74ad1b9b1bba1801a99a1ee10690f05aafbe30cbd99c065d24d88358d31f063669bfa87182950aaae58e2e9374370beebe5660b74ab7ca133612e8587437d73bae3773f655
+    signature: 97b04736280ea9f8e2f706fa3156fa8bc6de277063945e01f8cefbcbac95b8a92976dce593638deb775cb101d0a8e72f9e58582445beca8a081fea130064b405b4910452338716b135a14800ec33888c1577fd1b05c2bdfaa75890897b23841a7d67e7906853d07020f66612586188f2c9f903e4042dd4498f79989b1f42b8622e59713c2e54624efb12e5bda0c452e6a0b5c652f68a7861fa2e76026a2a5d91b593788d7e425d7fb1fa999aa195f255cc81ea9074cd3dac48ec9af24c446ecc5557d11c95c52c64224746780cf7d1885c7f2699035f836e4d0c1eddd6d2350c2cdc0e52e7c27b4d5cb1d5a1970654bfe0ba1744a1564267a0447cafca96dbcb
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -61,6 +61,7 @@ setup_SSH_campaign:
       concurrency: <% int($.concurrency) %>
       workflow: <% $.workflow %>
       input:
+        token_auth: <% $.token_auth %>  
         neId: <% $.host.neId %>
         sshUsername: <% $.sshUsername %>
 
