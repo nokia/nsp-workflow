@@ -11,7 +11,7 @@ cleanup_cflash:
   workflow_meta:
     title:   Cleanup SR OS node cflash
     author:  NOKIA DEMO
-    signature: 823697b6d6a0dfc97614c36ab72ab9599c3f9fbc40fe6609d2a44bdfbe311f83e935f18d6cc0d76799ae6bdcf9b373349faf801fd1675fedbbc6af0d5b1dfc5a9c7e61269a4fbc700cd84324ad2b43977d77e8a426d7cc3dc864f9b8aa65c036ba291714e2ee0635a8e57058533f920c996e67525e62c7f407fd28ba7d3e340bdafd10b0542de317decd69edb00a2099ea390999c36af3764139fb7cf8144f8835525e925d41740a4acc6dec20e888fdcae42efd0075d2f02e323842ef9cdec623cb3f5cf0c15037a86ac6c8bc09c23e62a6ab48211505d5b30ee5128be3e94dd0eb6c523080a4ed4c083ec34ca22b493b89382a27ea58d7060f8e6815f6a853
+    signature: 7f36f6d6ea2929541f92e631fd73d9e2ff97d12440f203fa5644a24c4f06689961982bd866028e6954dc51d899c82a6184d4c28183fb79e0c20bb79df6ceae1f6d267c9408d18a58f95f4f62b8c064b7525228eb78daec96bc45b2948c2ff0ee2e62fedd393562abd8675c2db0db97ab02d63f9227d36412a57ce15f1f5bfa7a0411fb6aa7b194676d5ac7ba9e3cc619e725feff1662ab5bcb8976fe2b6c2ba9a70fee0d2610592f7dd8c243627e359edbd297a835ed1b819e302c21397a061fc805e42c2b7fcf282d55b0495fc9a26f0fc33817792dda0d729fe78e0f20652e37d9ab256263a541f6d041f46b1ff637e11f086b54a300c934eccf7a8549d42c
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -79,7 +79,7 @@ cleanup_cflash:
           - /!classic-cli
           - show time
       publish:
-        nodeTime: <% task().result %>
+        nodeTime: <% task().result.data.responses["command_2"][0] %>
       on-success:
         - readDirectoriesMDM
 
@@ -113,7 +113,7 @@ cleanup_cflash:
           - environment no more
           - file dir <% $.dir %>
       publish:
-        dirResults: <% task().result %>
+        dirResults: <% task().result.data.responses["command_3"] %>
       on-success:
         - applyFilter
 
@@ -151,7 +151,7 @@ cleanup_cflash:
           if (delAge > 0) {
             var delTime = Date.parse(nodeTime) - 1000*delAge;
             var timeZone = nodeTime.split(/\s+/)[4];
-          } else if (deleteBefore != "") {
+          } else if (deleteBefore !== "") {
             var delTime = Date.parse(deleteBefore);
             var timeZone = "UTC";
           } else {
@@ -161,29 +161,27 @@ cleanup_cflash:
 
           var fileList = [];
           files.forEach(function(dir) {
-            for (var key in dir) {
-              if (key.startsWith("cmd2-")) {
-                var currDir = key.split(/\s/)[2];
-                dir[key].forEach(function(cmd) {
-                  if (cmd.match(/^[0-9]{2}/)) {
-                    var file = cmd.split(/\s+/);
-                    if (!(safeList.indexOf(file[3])>-1) && (file[2]!=="<DIR>")) {
-                      var [hour, minute] = file[1].split(/:/);
-                      if ( minute.endsWith("p") && Number(hour)!==12) {
-                        hour = Number(hour) + 12;
-                      }
-                      minute = minute.substring(0, minute.length-1);
-                      var fileTime = new Date(file[0]+" "+hour+":"+minute+" "+timeZone);
-                      if (Number(fileTime) < delTime) {
-                        var fileFdn = currDir + "/" + file[3];
-                        fileList.push(fileFdn);
-                      }
-                    }
-                  }
-                });
+            dir["command_3"].forEach(function(cmd) {
+              if (cmd.match(/^Directory of /)){
+                currDir = cmd.split(' ')[2]
               }
-            }
-          });
+              else if (cmd.match(/^[0-9]{2}/)) {
+                var file = cmd.split(/\s+/);
+                if (!(safeList.indexOf(file[3])>-1) && (file[2]!=="<DIR>")) {
+                  var [hour, minute] = file[1].split(/:/);
+                  if ( minute.endsWith("p") && Number(hour)!==12) {
+                    hour = Number(hour) + 12;
+                  }
+                  minute = minute.substring(0, minute.length-1);
+                  var fileTime = new Date(file[0]+" "+hour+":"+minute+" "+timeZone);
+                  if (Number(fileTime) < delTime) {
+                    var fileFdn = currDir + "/" + file[3];
+                    fileList.push(fileFdn);
+                  }
+                }
+              }
+            })
+          })
           return fileList;
 
       publish:
