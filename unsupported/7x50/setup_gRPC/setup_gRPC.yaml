@@ -11,7 +11,7 @@ setup_gRPC:
   workflow_meta:
     title:   Setup gRPC on Nokia SROS nodes
     author:  NOKIA DEMO
-    signature: 50e446bc2c49254d2fc93f5ae6e57d41bd2d7c719fefc5f27362365f7ffe19144fda73c7970e94c08d1e7477a36c74cfd3ec4e23d7bd8db7e6bbab0c7fff7e1fee46f2d49acf61bed92574f48a001f254e71bc255c6f7914b008dc7c927d9a1c8e984b37b544d25969c9ba426f79b43cc95217fc0e9307a8e1ea2b0fb7438d7b4145194b56a6bd521b93f12e5dc4bfec10016d31d343f5329ac4c9783f1fbb0dc9e979a8aae609da45d54312ed9803f8eb5b1b46ebfbb493ae6659167ff7eaaab8757c06da5470676a0af1c4beced03770a58e18ebca960cc1f087bfd2140326ef35aa3e760711cd6bea8781b3634fdd43c287c3bfa8aecfdbbb595a3925d5b7
+    signature: 8c66c72b82bf7bace2087d98926a40165317b268bf3ca67c2972471457f497dae74477167477e68ad2beaea687fae07762c6cfe030d9e6acfd8b962f4afb81bab4486fe18537617faee06be5a5ed9dce1fbb564718611c6ddad5598b8b3a53338e5ffe02c1466d7828555fcfb462da79d7ac8ac90fa63b31f2397bbf303fb916e910d96a68299ecd8e05fbdf1dbb21260dd4f447c70325bae4d4ba6d013650641479482c68a150d3039e2546c5920321b00e5dde4bfadf862fa19474f8c26d76afe93c7848d0f6a582cc2d41bc6769448a512593a603b91836c324d397ef61b41b838964bc27666374310f017dc4eb9c8cd5ee44309370bc0f17794a8670b5e5
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -29,6 +29,7 @@ setup_gRPC:
           mgmtmode: ['classic', 'model-driven']
 
   input:
+    - token_auth:
     - neId: '1.1.1.1'
     - grpcUsername: grpc
     - grpcPassword: Nokia4gnmi
