@@ -11,7 +11,7 @@ cleanupUserCombined:
   workflow_meta:
     title:   Delete local user from all nodes
     author:  NOKIA DEMO
-    signature: 4d04a9b97ef5b08462b61fd438dea28105ec321c6903fb4505145457ff8d53e8396469d3dfb8cf5ffac0bb6e744f1eb55a09f28d6d680a92d995ec7ee90a03a080526fb30033d5f804346be172ccc6a82bba9241485b107a753ce3cc3fc3b48d5c2dbf677806de7ffcd8546e47f8086d718e7f0cf453b734bdbbc430cbf9993d0100294358ec92f67be8a2566c67e616388db5502a094ecd34426091c5ff280d2ed334497089f8190980e20441e99763ab4384e0dafe358b5eaf2e1b0de4005e8a91d336088e2cde128b87912e6728ad516a586039ea22950323d0304dbef8251b9b2694e4fb435f981c466cb446a34960d32b3148697684590488d27f2e00cd
+    signature: 2da7f2cec97f1b92783c3c72d65b2243141615bd8df23764091eff26362125e9b4efd97c8fbd641088aeb98eca57083d829a7206ceb66e9c2958620b237ea7f4bf1901b957a439f8b24227dabfe7d25c23422ea0b05be3ac7ba219e7e523c722627b7f67b32be695f98bbebcd9e60fdd4306eb14ba4a9139c8fd76e76a84019d36ca6141d785bced963e2d84b2b80eb86a6fec0a3331dacbd501bcca546e45b67c7af2c68a6304c9001dc9723f160a846b668be5557d033d6cb3bc1485d98cb5ab54a2c590ed45fbf271718a3a81e854b1b9c61fc94f52aa35e3b88c3c3227fdd8874c17ad8b56ea00e255e277cbcd6c4887d13d3a3edeeb7d3ee435d86a393b
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -57,7 +57,7 @@ cleanupUserCombined:
           - /!md-cli
           - configure private
           - system security user-params local-user
-          - delete user <% $.sshUsernamenamename %>
+          - delete user <% $.sshUsername %>
           - commit
       publish:
         status: <% task().result %>
@@ -75,7 +75,7 @@ cleanupUserCombined:
           Content-Type: 'application/json'
           Authorization: 'Bearer <% $.token_auth %>'
         body:
-          - configure system security no user <% $.sshUsernamename %>
+          - configure system security no user <% $.sshUsername %>
           - exit all
       publish:
         status: <% task().result %>
