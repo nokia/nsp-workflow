@@ -11,7 +11,7 @@ setup_gRPC:
   workflow_meta:
     title:   Setup gRPC on Nokia SROS nodes
     author:  NOKIA DEMO
-    signature: 8c66c72b82bf7bace2087d98926a40165317b268bf3ca67c2972471457f497dae74477167477e68ad2beaea687fae07762c6cfe030d9e6acfd8b962f4afb81bab4486fe18537617faee06be5a5ed9dce1fbb564718611c6ddad5598b8b3a53338e5ffe02c1466d7828555fcfb462da79d7ac8ac90fa63b31f2397bbf303fb916e910d96a68299ecd8e05fbdf1dbb21260dd4f447c70325bae4d4ba6d013650641479482c68a150d3039e2546c5920321b00e5dde4bfadf862fa19474f8c26d76afe93c7848d0f6a582cc2d41bc6769448a512593a603b91836c324d397ef61b41b838964bc27666374310f017dc4eb9c8cd5ee44309370bc0f17794a8670b5e5
+    signature: 96000781a0dfc75569b3a195544439511ca25a48c2897f1ee26e2d61f4154466311f960b7e9185dda8ca03e7b132282d11fcb82784cca6cdbe139beb653d1cbd17bde12a688644dad67a21d11cc4e229acdeee54c888fc0d7450f236570393014efec50c9a7d70b561e50bb41db79999041de0f02bc71e77f610509534e979e5ab138398a2345350068a0aa8217e09cd40283a1f36e9e4840ced002d48aa241a6d39fcf1bcf3afb35d7e2cf79f64ffebcf2d8bbc31c8815b81ee865d8cc6906fe3e064b233a2ac839516467728487059c9644fd2c3da10b8dc3014a6cbb54943c694601e9fad00647e759f29ea87bf96310a5922b6f93d3ef65f769ba785519a
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -29,7 +29,7 @@ setup_gRPC:
           mgmtmode: ['classic', 'model-driven']
 
   input:
-    - token_auth:
+    - token_auth
     - neId: '1.1.1.1'
     - grpcUsername: grpc
     - grpcPassword: Nokia4gnmi
@@ -75,17 +75,14 @@ setup_gRPC:
         verify: False
         cmds:
           - /!md-cli
-          - configure private
-          - system security user-params local-user user "<% $.grpcUsername %>"
-          - password "<% $.grpcPassword %>"
-          - access grpc
-          - console member "administrative"
-          - exit
-          - system grpc
-          - tls-server-profile "tls-server-profile"
-          - admin-state enable
-          - exit
+          - edit-config private
+          - configure system security user-params local-user user "<% $.grpcUsername %>" password "<% $.grpcPassword %>"
+          - configure system security user-params local-user user "<% $.grpcUsername %>" access grpc
+          - configure system security user-params local-user user "<% $.grpcUsername %>" console member "administrative"
+          - configure system grpc tls-server-profile "tls-server-profile"
+          - configure system grpc admin-state enable
           - commit
+          - quit-config
 
     grpcSetupNFMP:
       action: std.http
