@@ -11,7 +11,7 @@ cleanup_cflash:
   workflow_meta:
     title:   Cleanup SR OS node cflash
     author:  NOKIA DEMO
-    signature: 7f36f6d6ea2929541f92e631fd73d9e2ff97d12440f203fa5644a24c4f06689961982bd866028e6954dc51d899c82a6184d4c28183fb79e0c20bb79df6ceae1f6d267c9408d18a58f95f4f62b8c064b7525228eb78daec96bc45b2948c2ff0ee2e62fedd393562abd8675c2db0db97ab02d63f9227d36412a57ce15f1f5bfa7a0411fb6aa7b194676d5ac7ba9e3cc619e725feff1662ab5bcb8976fe2b6c2ba9a70fee0d2610592f7dd8c243627e359edbd297a835ed1b819e302c21397a061fc805e42c2b7fcf282d55b0495fc9a26f0fc33817792dda0d729fe78e0f20652e37d9ab256263a541f6d041f46b1ff637e11f086b54a300c934eccf7a8549d42c
+    signature: 04d8d1660ec132ee8d9775ffbf3dad1fb89b6e454113ada1772b1fba84d14823577971936d50a58c82da74ce01e875f839cf632535feb80d695f03f597ff3c40df458e1c84f2f8c449616faf537c7535f1fb0b1a5751bc9a78cf684b4c838acc8e18064607d846f602609d145c872d87c071dd72ec76fe284eb4380d6e3db0dbdb2eef199a315c6fcb7a1b878c644fdebb50ca895335ee8c74042c71d52033bb02aa0e54010ed899cd8bf8f230deed3cda4e074259ed338c41004712e1d72d1697ae2c7b6f65be418b45e6e1d2201119d9a9f977d7efc6b3f30ccd71b9a3c8aa174b97360b563e8f2d2b76041830811d86773f2a10fed038dcc240d889f4a23a
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -113,7 +113,7 @@ cleanup_cflash:
           - environment no more
           - file dir <% $.dir %>
       publish:
-        dirResults: <% task().result.data.responses["command_3"] %>
+        dirResults: <% task().result.data.responses %>
       on-success:
         - applyFilter
 
@@ -158,7 +158,6 @@ cleanup_cflash:
             var delTime = Date.parse(nodeTime);
             var timeZone = nodeTime.split(/\s+/)[4];
           }
-
           var fileList = [];
           files.forEach(function(dir) {
             dir["command_3"].forEach(function(cmd) {
