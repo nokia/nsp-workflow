@@ -11,7 +11,7 @@ cleanup_cflash:
   workflow_meta:
     title:   Cleanup SR OS node cflash
     author:  NOKIA DEMO
-    signature: 04d8d1660ec132ee8d9775ffbf3dad1fb89b6e454113ada1772b1fba84d14823577971936d50a58c82da74ce01e875f839cf632535feb80d695f03f597ff3c40df458e1c84f2f8c449616faf537c7535f1fb0b1a5751bc9a78cf684b4c838acc8e18064607d846f602609d145c872d87c071dd72ec76fe284eb4380d6e3db0dbdb2eef199a315c6fcb7a1b878c644fdebb50ca895335ee8c74042c71d52033bb02aa0e54010ed899cd8bf8f230deed3cda4e074259ed338c41004712e1d72d1697ae2c7b6f65be418b45e6e1d2201119d9a9f977d7efc6b3f30ccd71b9a3c8aa174b97360b563e8f2d2b76041830811d86773f2a10fed038dcc240d889f4a23a
+    signature: 11493cc564e385082ed9d9c7042111c8de260178e2be2d69f3bc77563b01a6fc9fb20a76a18b03e239c28350d328d08999e46f67248a2442818a301aacc38ad9a513ae4966bb69b6309b4d04fd7ee5f3d6f31e15df6a5f2a544391fcb333575cd639192faaef1d4711781221ece79471835f83c446774aa619cc80e89cdf7c58b9c36f4f3d799de1febe9cde20cc961ed8e64a9fd30970f725add7ff36f1b5d4cca7b8643b55dd383652937c00da6c45bb8d736f83995690a27e0b42a82183acb2053bffa5f678af58f3b124e33d897e2f15bc86b550ad21d1d0657403b2273f99069ebc9fdf89ea74f957cb1779f59cba2c624d29a2a6b943573de4b126a5ee
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -146,7 +146,7 @@ cleanup_cflash:
           var files = $.dirResults;
           var delAge = <% int($.deleteAge) %>;
           var delBefore = $.deleteBefore
-          var nodeTime = $.nodeTime["cmd1-show time"][1];
+          var nodeTime = $.nodeTime;
 
           if (delAge > 0) {
             var delTime = Date.parse(nodeTime) - 1000*delAge;
