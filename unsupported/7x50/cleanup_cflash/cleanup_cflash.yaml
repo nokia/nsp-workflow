@@ -11,7 +11,7 @@ cleanup_cflash:
   workflow_meta:
     title:   Cleanup SR OS node cflash
     author:  NOKIA DEMO
-    signature: 11493cc564e385082ed9d9c7042111c8de260178e2be2d69f3bc77563b01a6fc9fb20a76a18b03e239c28350d328d08999e46f67248a2442818a301aacc38ad9a513ae4966bb69b6309b4d04fd7ee5f3d6f31e15df6a5f2a544391fcb333575cd639192faaef1d4711781221ece79471835f83c446774aa619cc80e89cdf7c58b9c36f4f3d799de1febe9cde20cc961ed8e64a9fd30970f725add7ff36f1b5d4cca7b8643b55dd383652937c00da6c45bb8d736f83995690a27e0b42a82183acb2053bffa5f678af58f3b124e33d897e2f15bc86b550ad21d1d0657403b2273f99069ebc9fdf89ea74f957cb1779f59cba2c624d29a2a6b943573de4b126a5ee
+    signature: 2ab20ff046d46f482a8aec9f92b66aad0f7e92d5e27cf799b0047f4fb4c5599f3edcf2c9886c30def575c622cad3229904d814ae77c4d568020b99673a4c2eff302b91a3195d24a5bd502a44ce7e788c3f890d183c88d993b94786882c8500354e99b4b886f3d94c5a1c4121fd40eca2efad46ec8893aa4561eeffbe7b7787cea898bdfe67d6524f9f16c2d972fd191682a206335cd19eab931e0f0a84e175d1dd6f681188af3eb1ea20b0020727c9a514f740708ac4a5a8a9eb07c994fb5b02526029779981876359d632210116875ccb3d36f2b344197ceaa16b4eace688d009a24821324e4b8e4ef5aa32d2d100e2b987fe2b8aeffdf78c67806b1ec4e543
     version: '1.0.0'
     license: BSD-3
     package: SROS Automation
@@ -186,8 +186,8 @@ cleanup_cflash:
       publish:
         fileList: <% task().result %>
       on-success:
-        - deleteFilesMDM: <% dryRun != true and $.hosttype = 'mdm' %>
-        - deleteFilesNFMP: <% dryRun != true and $.hosttype = 'nfmp' %>
+        - deleteFilesMDM: <% $.dryRun != true and $.hosttype = 'mdm' %>
+        - deleteFilesNFMP: <% $.dryRun != true and $.hosttype = 'nfmp' %>
 
     deleteFilesMDM:
       with-items: file in <% $.fileList %>
