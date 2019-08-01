@@ -19,5 +19,8 @@ environment:
     wfmPassword: changeme
     mdcServer: localhost
     mdcPort: 8545
+    neUsername: 'admin'
+    nePassword: 'admin'
+    cflash: 'cf3'
 
 ...

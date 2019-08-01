@@ -11,8 +11,8 @@ setup_TLS:
   workflow_meta:
     title:   Setup TLS with certificates on Nokia SROS nodes
     author:  NOKIA DEMO
-    signature: 65399478ca8b672daad02b258141c11cfc6390a6f93ec220b387929beafb47fb33931b36e787a5ddf0c0abac251e4301dbdeef40a26d0ff8bd66f202eccb08936c7f0da04dd9183d0db2bcde9fbeb6397f5964f42ac4b1d0d782dca793cf67ee7ffd61d7c15265fea01588415dbebe0de1ac07b3ddff3143f1e1169c612580926167e9426118a04d415865d9a9924a6dd39010b0575a6ea3fcd04ac5ccbfbce20b5dda8e9203629134e87e2f7fbf853115d423eba78620f96a2de65c4533686957e093bd744d8a6466b11d98350208c8a2c1ef77345cbfc9f355bb0420295ab6db6d57fc0277c3e0b4ccf7c922f5ca7723886bac5b7e188ad6c13428ff669a90
-    version: '1.0.0'
+    signature: 8b8cef0d70bafefd5049d4538c694886bf6c39b0283a00633e3ea1ede7abd6f038dd11bed96fe8430a46e6a9b137e24f7a70737f758e1f2ffd1ffa1be1d383740aa5d85e9a6698eb4b6242c0c53823aa79b085683a23dde6045a02d6724d77c8526963c5dad7ecf20541a799e9e1e60e752cc5b29ff461f9e8ebe35b231d2d8a1ea9cfadc41d4857a3722a5ce12d181fcf0dd7c8f43d0886d6ba9f821876e80bcc4ccd8553e442508f19b1192ea7666ed4926ab756d7617c2ee6d36b963e7b91341e4fff99f19b5baea266bf463532cf574ad8c78e045ae89bad8305b673e100231f43cc4611faf35b55a423dab67d2e01a9675ff5a706590064e0be39adefcb
+    version: '1.0.1'
     license: BSD-3
     package: SROS Automation
     deprecated: false
@@ -118,8 +118,8 @@ setup_TLS:
           openssl req -out <% $.hostname %>_certreq.pem -key private/<% $.hostname %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.hostname %>/emailAddress=nobody@nokia.com"
           openssl ca  -out <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.host %>") -infiles <% $.hostname %>_certreq.pem
           openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
-          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
-          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/<% $.env.cflash %>:/
       publish:
         exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
       on-success:
@@ -135,8 +135,8 @@ setup_TLS:
         verify: False
         cmds:
           - /!classic-cli
-          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
-          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
           - admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
 
     activateHostCertificateNFMP:
@@ -150,8 +150,8 @@ setup_TLS:
           Content-Type: 'application/json'
           Authorization: 'Bearer <% $.token_auth %>'
         body:
-          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
-          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
           - admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
 
     initializeCA:
@@ -188,8 +188,8 @@ setup_TLS:
         password: '<% $.env.pkiPassword %>'
         cmd: |
           cd /opt/nsp/os/ssl/certs/telemetry
-          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcert.pem sftp://<% $.host %>/cf3:/
-          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcrl.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcert.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcrl.pem sftp://<% $.host %>/<% $.env.cflash %>:/
       on-success:
         - createHostCertificate
 
@@ -205,8 +205,8 @@ setup_TLS:
           openssl req -out <% $.hostname %>_certreq.pem -key private/<% $.hostname %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.hostname %>/emailAddress=nobody@nokia.com"
           openssl ca  -out <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.host %>") -infiles <% $.hostname %>_certreq.pem
           openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
-          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/cf3:/
-          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/cf3:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/<% $.env.cflash %>:/
       publish:
         exp_old: none
         exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
@@ -223,10 +223,10 @@ setup_TLS:
         verify: False
         cmds:
           - /!classic-cli
-          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
-          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
-          - admin certificate import type cert input cf3:/CAcert.pem output cacert.crt format pem
-          - admin certificate import type crl  input cf3:/CAcrl.pem  output cacrl.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/CAcert.pem output cacert.crt format pem
+          - admin certificate import type crl  input <% $.env.cflash %>:/CAcrl.pem  output cacrl.crt  format pem
           - /!md-cli
           - edit-config private
           - configure system security pki ca-profile "tls-ca" admin-state enable
@@ -259,10 +259,10 @@ setup_TLS:
           Content-Type: 'application/json'
           Authorization: 'Bearer <% $.token_auth %>'
         body:
-          - admin certificate import type cert input cf3:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
-          - admin certificate import type key  input cf3:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
-          - admin certificate import type cert input cf3:/CAcert.pem output cacert.crt format pem
-          - admin certificate import type crl  input cf3:/CAcrl.pem  output cacrl.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/CAcert.pem output cacert.crt format pem
+          - admin certificate import type crl  input <% $.env.cflash %>:/CAcrl.pem  output cacrl.crt  format pem
           - configure system security pki ca-profile "tls-ca" create
           - cert-file "cacert.crt"
           - crl-file "cacrl.crt"
