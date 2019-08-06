@@ -18,30 +18,30 @@ setEnvironment:
     dependencies:
       platform:
         nspOS: ['19.6']
-
+    
   input:
     - token_auth
-
+    
     - pkiServer: localhost
     - pkiUsername: root
     - pkiPassword: changeme
     - pkiStorepass: 'NokiaNsp1!'
-
+    
     - mdmServer: localhost
     - mdmUsername: root
     - mdmPassword: changeme
-
+    
     - wfmServer: localhost
     - wfmUsername: root
     - wfmPassword: changeme
-
+    
     - mdcServer: localhost
     - mdcPort: 8545
-
+    
     - neUsername: admin
     - nePassword: admin
     - cflash: cf3
-
+    
     - certOrg: '/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM'
     - certRootCN: '/CN=NSP Development Root CA'
     - certEmail: '/emailAddress=nobody@nokia.com'
