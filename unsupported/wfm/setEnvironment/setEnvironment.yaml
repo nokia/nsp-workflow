@@ -1,0 +1,92 @@
+version: '2.0'
+
+setEnvironment:
+  type: direct
+
+  workflow_meta:
+    title:   Setup WFM environment
+    author:  NOKIA DEMO
+    signature: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000829581e00c78cfeed861e78161a09d3b39db4abaf73637f4ec612d8b7142c6a562617a223def7a0b8c24215f8fa8c267d6f5bc68b9199a177eeadc4367a2361871b0f5cfd58e2ffa9856f8b01b22e5b70a1812c5a08934c3846086f022f25a6e9ad6eac1a4e2f1e0e1e9517b8e6158b9040bcb52a824074ed3777359c914ab45
+    version: '1.0.0'
+    license: BSD-3
+    package: NSP Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/wfm/setEnvironment
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+    
+  input:
+    - token_auth
+    
+    - pkiServer: localhost
+    - pkiUsername: root
+    - pkiPassword: changeme
+    - pkiStorepass: 'NokiaNsp1!'
+    
+    - mdmServer: localhost
+    - mdmUsername: root
+    - mdmPassword: changeme
+    
+    - wfmServer: localhost
+    - wfmUsername: root
+    - wfmPassword: changeme
+    
+    - mdcServer: localhost
+    - mdcPort: 8545
+    
+    - neUsername: admin
+    - nePassword: admin
+    - cflash: cf3
+    
+    - certOrg: '/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM'
+    - certRootCN: '/CN=NSP Development Root CA'
+    - certEmail: '/emailAddress=nobody@nokia.com'
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    createEnvironment:
+      action: std.http
+      input:
+        url: <% locate_nsp("Workflows") %>/v1/action
+        method: POST
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+        body:
+          yaml: |
+            version: '2.0'
+            environment3:
+              description: environment to allow portability of workflows
+              base: std.echo
+              base-input:
+                output: none
+              output:
+                pkiServer: <% $.pkiServer %>
+                pkiUsername: <% $.pkiUsername %>
+                pkiPassword: <% $.pkiPassword %>
+                pkiStorepass: <% $.pkiStorepass %>
+                mdmServer: <% $.mdmServer %>
+                mdmUsername: <% $.mdmUsername %>
+                mdmPassword: <% $.mdmPassword %>
+                wfmServer: <% $.wfmServer %>
+                wfmUsername: <% $.wfmUsername %>
+                wfmPassword: <% $.wfmPassword %>
+                mdcServer: <% $.mdcServer %>
+                mdcPort: <% $.mdcPort %>
+                neUsername: <% $.neUsername %>
+                nePassword: <% $.nePassword %>
+                certOrg: <% $.certOrg %>
+                certRootCN: <% $.certRootCN %>
+                certEmail: <% $.certEmail %>
+
+...
