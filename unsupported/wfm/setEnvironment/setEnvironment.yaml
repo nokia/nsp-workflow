@@ -6,7 +6,7 @@ setEnvironment:
   workflow_meta:
     title:   Setup WFM environment
     author:  NOKIA DEMO
-    signature: 01a2c6a2c4d1e330b727755e9c89190a8ceb8c6f72dc7558756f08f4b11e5a2a5aad6a6d550d333b3db124773e8a5b97088272676290bd79a77db4efb3e743b837cdb723133cf6a698696ecfc9ace32611ebbe11a1908fc0e08e4e807067114cf8792fb1075cb5d0a0f25bfc294775a2b0ae36d812536d00a3b92906afdf50c23a25e45e49c1cd5f1df6f0cae8c7a09084471b96be5f559b65bd33be86e894a8291541eff2dacc88945507a5cba53dc2b5c51d4b60604335ebe38bffff371aecabb643b73f5001b74230486dc41b29312d1ab7f9e948e8b1f5dcc51a1a2e330a7c256acff6128a290ef912a6fb985d72f3aa4fd132afb3148382b8e08d3072a4
+    signature: 64212949c3f920dcfd13b8c717def0cefbcaf352343c4fb2ed9dd6a8c8bebc42642fc114ee1383164d93327d704c6845ede72b1f98ae2cd3a1f2b5f62a92454888dfa39de900f99bf60f63fbde5013bab1015db61032027a4f3d834bf04605195c778676712bddb2fec054328d6f8dc6082ab2f1320dd233416d2217e9d2eec7ec8a71ae28ac5e6059a4a3937c4a0224c303f8f9e1330c13669f05606cbdcb6dd8be56b8b30dc03c5845d1ffd419e27e6466f1b0342e68a1914dfe20b3cd47c80480632496f370f7ae28f91e7c85347723698d1b6385ebb8f0dd8973cfc419edeeaa5b76521ab4180557fc42c1ecc248bce61740394531169ab1bae62f04721f
     version: '1.0.0'
     license: BSD-3
     package: NSP Automation
@@ -18,30 +18,30 @@ setEnvironment:
     dependencies:
       platform:
         nspOS: ['19.6']
-    
+
   input:
     - token_auth
-    
+
     - pkiServer: localhost
     - pkiUsername: root
     - pkiPassword: changeme
     - pkiStorepass: 'NokiaNsp1!'
-    
+
     - mdmServer: localhost
     - mdmUsername: root
     - mdmPassword: changeme
-    
+
     - wfmServer: localhost
     - wfmUsername: root
     - wfmPassword: changeme
-    
+
     - mdcServer: localhost
     - mdcPort: 8545
-    
+
     - neUsername: admin
     - nePassword: admin
     - cflash: cf3
-    
+
     - certOrg: '/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM'
     - certRootCN: '/CN=NSP Development Root CA'
     - certEmail: '/emailAddress=nobody@nokia.com'
@@ -65,7 +65,7 @@ setEnvironment:
         body:
           yaml: |
             version: '2.0'
-            environment3:
+            environment:
               description: environment to allow portability of workflows
               base: std.echo
               base-input:
