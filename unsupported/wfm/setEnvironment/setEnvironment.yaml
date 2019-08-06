@@ -6,7 +6,7 @@ setEnvironment:
   workflow_meta:
     title:   Setup WFM environment
     author:  NOKIA DEMO
-    signature: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000829581e00c78cfeed861e78161a09d3b39db4abaf73637f4ec612d8b7142c6a562617a223def7a0b8c24215f8fa8c267d6f5bc68b9199a177eeadc4367a2361871b0f5cfd58e2ffa9856f8b01b22e5b70a1812c5a08934c3846086f022f25a6e9ad6eac1a4e2f1e0e1e9517b8e6158b9040bcb52a824074ed3777359c914ab45
+    signature: 01a2c6a2c4d1e330b727755e9c89190a8ceb8c6f72dc7558756f08f4b11e5a2a5aad6a6d550d333b3db124773e8a5b97088272676290bd79a77db4efb3e743b837cdb723133cf6a698696ecfc9ace32611ebbe11a1908fc0e08e4e807067114cf8792fb1075cb5d0a0f25bfc294775a2b0ae36d812536d00a3b92906afdf50c23a25e45e49c1cd5f1df6f0cae8c7a09084471b96be5f559b65bd33be86e894a8291541eff2dacc88945507a5cba53dc2b5c51d4b60604335ebe38bffff371aecabb643b73f5001b74230486dc41b29312d1ab7f9e948e8b1f5dcc51a1a2e330a7c256acff6128a290ef912a6fb985d72f3aa4fd132afb3148382b8e08d3072a4
     version: '1.0.0'
     license: BSD-3
     package: NSP Automation
@@ -18,30 +18,30 @@ setEnvironment:
     dependencies:
       platform:
         nspOS: ['19.6']
-    
+
   input:
     - token_auth
-    
+
     - pkiServer: localhost
     - pkiUsername: root
     - pkiPassword: changeme
     - pkiStorepass: 'NokiaNsp1!'
-    
+
     - mdmServer: localhost
     - mdmUsername: root
     - mdmPassword: changeme
-    
+
     - wfmServer: localhost
     - wfmUsername: root
     - wfmPassword: changeme
-    
+
     - mdcServer: localhost
     - mdcPort: 8545
-    
+
     - neUsername: admin
     - nePassword: admin
     - cflash: cf3
-    
+
     - certOrg: '/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM'
     - certRootCN: '/CN=NSP Development Root CA'
     - certEmail: '/emailAddress=nobody@nokia.com'
