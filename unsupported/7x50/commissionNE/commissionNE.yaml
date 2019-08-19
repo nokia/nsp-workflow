@@ -11,8 +11,8 @@ commissionNE:
   workflow_meta:
     title:   7x50 Device Commissioning with SNMPv2
     author:  NOKIA DEMO
-    signature: 63ed7d1db0a5196acec811644afa79c3f77878a855be480f3ca327e09c0632b55123a3e1227d7f32181a611c207dd841b56d212c03f8f3996fed3e3f4537bacfdef25e63fc0423befebcd23fb7e9b621dd3a110a017559ce75f5045877165a39f638d5da46999e99fe29b995d0dae580c943499525f0d236ebce58646381907b6143dda006a38c39cc54224a9a24985039811a33a97b86d1c62fd410bcb03d17ded796b4b62898ee60c2cf0cae199080b6ecaa2452d4a77a28f7af6afc4dab7343791e07fdd30eae46f0f0e54323c960d902411cae614abce2a7205c51c3f1d9fd47c4fc1764a5bf1eb6dda7071aef3af7a20bd40cb8756166306d7051159e6e
-    version: '1.0.0'
+    signature: 26a2e8d01b178d5da5101834d8c521675386e4a18feeb7a9b457678782ed247565b8936a16dcc1502deed56a4e36e5fd159fa762c7559994ba2f1c38887bf811050fec61c063ce51151efdbeae570b3ffab10cd7f0d1b12dc1335383b40f9f931dc99576a4734eb8bc54021216a6044a8bf601b83aa8d75b0877cf7b5c58dd6c0d74ec9d4d302eb489a8de62ac3dc566e21b0e5b384b7e43eeb875da4d1dc0fbbbe2a9b9e4bd419b9b127339b1dde8f1ffe655019fac55118aa81f818f009c758052ade76e5de52f4b2fc0b07be6f24c5508003c4224f94457eec6083e4292d08c23c6eebd4cb9514cab47ac2318813992f0371db625ad5f78a8545a32c3f7db
+    version: '1.0.1'
     license: BSD-3
     package: SROS Automation
     deprecated: false
@@ -44,7 +44,6 @@ commissionNE:
           - configure system snmp no shutdown
           - configure system snmp packet-size 9216
           - configure system security snmp community private rwa version both
-          - configure system security snmp community privatetrap98 rwa version both
           - configure system netconf no shutdown
           - configure system netconf auto-config-save
           - configure system security user "admin" access console netconf
