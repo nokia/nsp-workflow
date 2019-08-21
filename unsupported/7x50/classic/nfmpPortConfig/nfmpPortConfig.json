@@ -1,0 +1,96 @@
+{
+  "type": "object",
+  "properties": [
+    {
+      "description": "Select ports based on port description",
+      "name": "portDescription",
+      "title": "Port Description",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string",
+      "enum": null,
+      "group": "auto"
+    },
+    {
+      "description": "Configure: Port Encapsulation",
+      "name": "encapType",
+      "title": "Encapsulation",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string",
+      "enum": [
+        "nullEncap",
+        "qEncap",
+        "qinqEncap"
+      ],
+      "group": "auto"
+    },
+    {
+      "description": "Configure: Port Mode",
+      "name": "mode",
+      "title": "Mode",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string",
+      "enum": [
+        "access",
+        "hybrid",
+        "network"
+      ],
+      "group": "auto"
+    },
+    {
+      "description": "Configure: Admin State",
+      "name": "adminState",
+      "title": "Administrative State",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string",
+      "enum": [
+        "portInService",
+        "portOutOfService"
+      ],
+      "group": "auto"
+    },
+    {
+      "description": "Parallel execution is controlled by the concurrency attribute",
+      "name": "concurrency",
+      "title": "Concurrency",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "number",
+      "baseType": "number",
+      "enum": null,
+      "group": "auto",
+      "defaultValue": 1
+    },
+    {
+      "description": "Controls, whether to rollback on error",
+      "name": "rollbackOnError",
+      "title": "Rollback-on-error",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "boolean",
+      "baseType": "boolean",
+      "enum": null,
+      "group": "auto",
+      "defaultValue": true
+    }
+  ]
+}

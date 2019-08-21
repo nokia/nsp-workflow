@@ -1,104 +1,163 @@
 version: '2.0'
 
-port_config:
-  description: Configure ports using NFM-P
+nfmpPortConfig:
   type: direct
+
+  description: bulk port configuration using NFM-P
+
   tags:
-    - demo
-    - NFM-P
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   bulk port configuration using NFM-P
+    author:  NOKIA DEMO
+    signature: 09b8c99c349aad0df9219f22b570e17db63862746cf315cf213242945cb677cfadd43fade69b7110d6de97ab61b1485527fe3a6e5f9744e5f2a6539672d968f55d5d45495c6ab543d407f9361c598e63cf09cc6562d7b4b25f669c8bfac2357252de3a83baf9b5ca5aa9661a8fa778ed55ebe69127311723d5536a6e2a15e1b7373a74e5d3bbbc11e552faf76135f2c02f890c16486f07489cb7c8c36376bcbfc4e63abc187693d4e9d5138977dfc879a498e2bfeb1dbc5611c415417ad9a3612edee0b77a62bf9c91a1dbcc956e1b21fb656694ffd6ee495ecdd709a58b746196a6899159fc237093e802d5af033ebd54c86915b529da01c05767c3d919358e
+    version: '1.0.1'
+    license: BSD-3
+    package: SROS Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50/classic/nfmpPortConfig
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nsp: ['19.6']
+        nfmp: ['19.6']
+      nodes:
+        - type: 'Nokia 7x50'
+          releases: ['16.0', '19.5']
+          mgmtmode: ['classic']
+
+  tags:
+    - demo workflow by Nokia
 
   input:
-    - token_auth
-    - restgateway
-    - nfmp_host
-    - selector
-    - encapType
+    - portDescription: test
+    - encapType: qEncap
+    - mode: access
+    - adminState: portInService
+    - concurrency: 1
+    - rollbackOnError: true
 
   output:
-    status: <% $.status %>
+    result: <% $.status %>
+
+  output-on-error:
+    result: failed
 
   tasks:
-    getToken:
+    getEnvironment:
+      action: environment
+      publish:
+        env: <% task().result %>
+        status: success
+      on-success:
+        getAuthToken
+
+    getAuthToken:
       action: std.http
       input:
-        url: 'https://<% $.restgateway %>/rest-gateway/rest/api/v1/auth/token'
+        url: <% locate_nsp("authentication") %>/v1/auth/token
         method: POST
-        verify: False
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
         headers:
-          Content-Type: 'application/json'
-          Authorization: 'Basic <% $.token_auth %>'
+          Content-Type: application/json
+          Authorization: Basic <% $.env.nfmpAuthToken %>
         body:
-          grant_type: 'client_credentials'
+          grant_type: client_credentials
       publish:
-        token: <% task().result.content.access_token %>
+        token_auth: <% task().result.content.access_token %>
       on-success:
         - getAllPorts
-      on-error:
-        - errorOccured
+
+    revokeAuthToken:
+      action: std.http
+      input:
+        url: <% locate_nsp("authentication") %>/v1/auth/revocation
+        method: POST
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
+        headers:
+          Content-Type: application/x-www-form-urlencoded
+          Authorization: Basic <% $.env.nfmpAuthToken %>
+        body:  token=<% $.token_auth %>&token_type_hint=token
+      on-complete:
+        - fail: <% $.status = failed %>
 
     getAllPorts:
       action: std.http
       input:
-        url: 'https://<% $.nfmp_host %>:8443/nfm-p/rest/api/v1/managedobjects/search'
+        url: <% locate_nsp("samo_managed objects") %>/v1/managedobjects/searchWithFilter
         method: POST
-        verify: False
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
         headers:
-          Content-Type: 'application/json'
-          Authorization: 'Bearer <% $.token %>'
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
         body:
-          fullClassName: 'equipment.PhysicalPort'
-          simpleAttributeAndFilter:
-            description: '<% $.selector %>'
+          fullClassName: equipment.PhysicalPort
+          filterExpression: "description = '<% $.portDescription %>'"
+          resultFilter:
+            - objectFullName
+            - description
+            - mode
+            - encapType
+            - administrativeState
+            - displayedName
       publish:
         ports: <% task().result.content %>
+      publish-on-error:
+        status: failed
       on-success:
         - modifyPorts
       on-error:
-        - errorOccured
+        - revokeAuthToken
 
     modifyPorts:
       with-items: item in <% $.ports %>
+      concurrency: <% int($.concurrency) %>
       action: std.http
       input:
-        url: 'https://<% $.nfmp_host %>:8443/nfm-p/rest/api/v1/managedobjects/<% $.item.objectFullName %>'
+        url: <% locate_nsp("samo_managed objects") %>/v1/managedobjects/<% $.item.objectFullName %>
         method: PUT
-        verify: False
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
         headers:
-          Content-Type: 'application/json'
-          Authorization: 'Bearer <% $.token %>'
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
         body:
-          fullClassName: 'equipment.PhysicalPort'
+          fullClassName: equipment.PhysicalPort
           properties:
-            encapType: '<% $.encapType %>'
-            administrativeState: 'portInService'
+            mode: <% $.mode %>
+            encapType: <% $.encapType %>
+            administrativeState: <% $.adminState %>
+      publish:
+        successItems: <% task().result.url %>
+      publish-on-error:
+        status: failed
+        failedItems: <% task().result.url %>
       on-success:
-        - successDone
+        - revokeAuthToken
       on-error:
-        - undoChanges
+        - undoChanges: <% $.rollbackOnError %>
+        - revokeAuthToken: <% not $.rollbackOnError %>
 
     undoChanges:
       with-items: item in <% $.ports %>
+      concurrency: <% int($.concurrency) %>
       action: std.http
       input:
-        url: 'https://<% $.nfmp_host %>:8443/nfm-p/rest/api/v1/managedobjects/<% $.item.objectFullName %>'
+        url: <% locate_nsp("samo_managed objects") %>/v1/managedobjects/<% $.item.objectFullName %>
         method: PUT
-        verify: False
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
         headers:
-          Content-Type: 'application/json'
-          Authorization: 'Bearer <% $.token %>'
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
         body:
-          fullClassName: 'equipment.PhysicalPort'
+          fullClassName: equipment.PhysicalPort
           properties:
-            encapType: '<% $.item.encapType %>'
-            administrativeState: '<% $.item.administrativeState %>'
+            mode: <% $.item.mode %>
+            encapType: <% $.item.encapType %>
+            administrativeState: <% $.item.administrativeState %>
       on-complete:
-        - errorOccured
+        - revokeAuthToken
 
-    successDone:
-      publish:
-        status: "DONE"
-
-    errorOccured:
-      action: std.fail
-      publish:
-        status: "ERROR"
+...
