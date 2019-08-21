@@ -46,6 +46,8 @@ setEnvironment:
     - certRootCN: '/CN=NSP Development Root CA'
     - certEmail: '/emailAddress=nobody@nokia.com'
 
+    - nfmpToken: YWRtaW46Tm9raWFOc3AxIQ==
+
   output:
     result: done
 
@@ -88,5 +90,6 @@ setEnvironment:
                 certOrg: <% $.certOrg %>
                 certRootCN: <% $.certRootCN %>
                 certEmail: <% $.certEmail %>
+                nfmpAuthToken: <% $.nfmpAuthToken %>
 
 ...

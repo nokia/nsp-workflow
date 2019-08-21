@@ -252,6 +252,20 @@
       "enum": null,
       "group": "auto",
       "defaultValue": "/emailAddress=nobody@nokia.com"
+    },
+    {
+      "description": "NFMP Authentication Key",
+      "name": "nfmpToken",
+      "title": "NFMP token",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "password",
+      "baseType": "string",
+      "enum": null,
+      "group": "auto",
+      "defaultValue": "YWRtaW46Tm9raWFOc3AxIQ=="
     }
   ]
 }
