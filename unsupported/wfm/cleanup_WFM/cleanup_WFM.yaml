@@ -11,10 +11,10 @@ cleanup_WFM:
   workflow_meta:
     title:   Cleanup WFM results
     author:  NOKIA DEMO
-    signature: 8dde39e7647eef52a0b68379308cb5f7e82a2afcc603d369ffbe20ec5d52979eacaff00780527ce261bb172fa89a0268fd356d52d18277721c70b0a88269ed8e1db99d31e68cc67fbd8c2d61877ab9afd2ff07f21f65bb07b8c1cba9739785e885525b49d0ff22a969b6b5ae3241e31ecd495e6f8c95b8af2c92a3c00fefb561c168f5d796f7a8734a6339ac016350adfb2c80880dc446235b4d6ad0c95104cc1a4b1ea89a5a6009ed38e6005ebd93cee34118457ec77810c4dcd197d86e15ee1751d5193ec113dd143f1992f76123d6cab9bd56acc4ba147885485c8a8a23e0f747ba34713f53bdce35e4d6995d2a9f3b371bf882f549b32edabc621530c9ae
-    version: '1.0.0'
+    signature: 03e8aabf171b21863a67b3072ef363293c984c69882d94f8220534c0fe4402fc00bfa562f5a2ee82501b2bd302624fa79c579e0f63e31a6ca18ac191380fcf401c2547724120de8e82be282a0bb063158163fd04c3e7b62da82750ab0aca2813f2d3fecb4574a6855a3ed0d588c9b2e9081c3041341ddbdc539f5d05150939f0d27170e076cea8732054ea748ed0e7bc88bdb1f6d74601ff5c513b1b646a9aa393522b798a770f24d5b596cd36dd54ecbca7dce4d7884bec991a162b6c621d0a1845cc9a51a4f358030e31ac5cbc02fbd80d84143b4bbf70edb6f044b100a17c58834129e235cacf83b8f01e085cdeb1b0ec88ba27a7e627a7cf612d2a8b027e
+    version: '1.0.1'
     license: BSD-3
-    package: NSP Automation
+    package: WFM helpers
     deprecated: false
     urls:
       homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/wfm/cleanup_WFM
@@ -32,7 +32,7 @@ cleanup_WFM:
     - deleteAge:
 
   vars:
-    wfm: <% locate_nsp("Executions") %>
+    wfmAPI: <% locate_nsp("Executions") %>
 
   output:
     result: done
@@ -75,9 +75,9 @@ cleanup_WFM:
       action: std.http
       safe-rerun: true
       input:
-        url: <% $.wfm %>/v1/execution<% $.queryFilter %>
+        url: <% $.wfmAPI %>/v1/execution<% $.queryFilter %>
         method: GET
-        verify: False
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
         headers:
           Content-Type: application/json
           Authorization: Bearer <% $.token_auth %>
@@ -90,12 +90,12 @@ cleanup_WFM:
       with-items: id in <% $.wfmResults %>
       action: std.http
       input:
-        url: <% $.wfm %>/v1/execution/<% $.id %>
+        url: <% $.wfmAPI %>/v1/execution/<% $.id %>
         method: DELETE
-        verify: False
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
         headers:
           Content-Type: application/json
           Authorization: Bearer <% $.token_auth %>
-      concurrency: 10
+      concurrency: 50
 
 ...

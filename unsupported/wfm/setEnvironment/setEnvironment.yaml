@@ -6,8 +6,8 @@ setEnvironment:
   workflow_meta:
     title:   Setup WFM environment
     author:  NOKIA DEMO
-    signature: 5a151d527516b596d4fab2e7ac3a2d79315d2090905c4f204eb170a86b673817bff6ea7f27f63b4d578840e9905c8cd0cc55a1956728798c993c4347b0e8dfbd6e630bdae2321588a53151633d78b9ac71c5a29cb7bb808a71112cd5a3adc21f6789a1ce0a406a7823d11c52d73a8a190a245c2f022ee521d3b0fca28fd96271e41be67a1eedc45ee1fa29ff7361f6fe7b84b54c2bc24dd333b207e7ab67ce2f164acc41ce31b86f9f032b70d5810873377349a056f75c35d504589366375197262871a91175a08432bf62d8af37bea708c0eeb50442dc8ec7842119eb42be7d3d222faab91d6df0fcd90c56b82e7f7be7bd87f1f12eaf8d08d68af1d922b013
-    version: '1.0.0'
+    signature: 60f0889845658407ce7c6586a825a0b168504ff6d96e690b8b9254f8474c04f96ec1ec1fea70cd01382aa41d408b72dce90fe00b3787817d74b1fb99c2d45a8d321b427d7252555211b5763d9a7da82bf99bf997d3ad96809c6dbf8a6f2de6f7d2c389dff74b9c80b89f134529613c08d99a87685d32fca5a2347a1e547ee4aa37deff0e6f1df653e8ce0af22e9a78cdde6be00f55fbb404bccf981787b34429ea72ad931d20136f2031e6c604d917d1cf8fa9a7f0b4ecf7cdcd3ab80c9db5589390e8d46de11d526cfe9ce30bd81b2e01ed426cad4a0cc93463b1dac45cd482962f6571d464ca0ffb754722c0d9a67b3a829b0f6a1de2f718b843b019c9ddde
+    version: '1.0.1'
     license: BSD-3
     package: WFM helpers
     deprecated: false
@@ -60,7 +60,7 @@ setEnvironment:
       input:
         url: <% locate_nsp("Workflows") %>/v1/action
         method: POST
-        verify: False
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
         headers:
           Content-Type: application/json
           Authorization: Bearer <% $.token_auth %>
