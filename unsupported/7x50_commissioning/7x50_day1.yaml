@@ -124,6 +124,7 @@ version: '2.0'
         cmd:
           - /!md-cli
           - configure private
+          - sfm 1 sfm-type m-sfm5-12
           - card 1 card-type iom3-xp
           - card 1 mda 1 mda-type m60-10/100eth-tx
           - card 1 mda 2 mda-type m60-10/100eth-tx
