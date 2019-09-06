@@ -55,7 +55,7 @@ csvTest:
         jukebox_obj: <% csv_parse($.jukebox) %>
         playlist_obj: <% $.playlist %>
         playlist_csv1: <% csv_dump($.playlist, 1) %>
-        playlist_csv2: <% csv_dump($.playlist, 1) %>
+        playlist_csv2: <% csv_dump($.playlist, 2) %>
         playlist_csv3: <% csv_dump($.playlist, 3) %>
       publish:
         result: <% task().result %>
