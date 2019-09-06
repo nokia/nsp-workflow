@@ -128,9 +128,9 @@ version: '2.0'
           - card 1 card-type iom3-xp
           - card 1 mda 1 mda-type m60-10/100eth-tx
           - card 1 mda 2 mda-type m60-10/100eth-tx
-          - log file-id 10 compact-flash-location primary cf3
-          - log file-id 10 rollover 5
-          - log file-id 10 retention 36
+          - log file 10 compact-flash-location primary cf3
+          - log file 10 rollover 5
+          - log file 10 retention 36
           - log accounting-policy 10 record complete-ethernet-port
           - log accounting-policy 10 collection-interval 5
           - log accounting-policy 10 default true
