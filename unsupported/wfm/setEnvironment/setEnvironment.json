@@ -255,7 +255,7 @@
     },
     {
       "description": "NFMP Authentication Key",
-      "name": "nfmpToken",
+      "name": "nfmpAuthToken",
       "title": "NFMP token",
       "readOnly": false,
       "columnSpan": 4,

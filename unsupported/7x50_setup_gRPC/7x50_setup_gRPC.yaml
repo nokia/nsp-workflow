@@ -40,6 +40,13 @@ version: '2.0'
     result: failed
 
   tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        checkHost
+        
     checkHost:
       action: std.http
       input:

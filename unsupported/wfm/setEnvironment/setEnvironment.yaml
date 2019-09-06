@@ -6,7 +6,6 @@ setEnvironment:
   workflow_meta:
     title:   Setup WFM environment
     author:  NOKIA DEMO
-    signature: 60f0889845658407ce7c6586a825a0b168504ff6d96e690b8b9254f8474c04f96ec1ec1fea70cd01382aa41d408b72dce90fe00b3787817d74b1fb99c2d45a8d321b427d7252555211b5763d9a7da82bf99bf997d3ad96809c6dbf8a6f2de6f7d2c389dff74b9c80b89f134529613c08d99a87685d32fca5a2347a1e547ee4aa37deff0e6f1df653e8ce0af22e9a78cdde6be00f55fbb404bccf981787b34429ea72ad931d20136f2031e6c604d917d1cf8fa9a7f0b4ecf7cdcd3ab80c9db5589390e8d46de11d526cfe9ce30bd81b2e01ed426cad4a0cc93463b1dac45cd482962f6571d464ca0ffb754722c0d9a67b3a829b0f6a1de2f718b843b019c9ddde
     version: '1.0.1'
     license: BSD-3
     package: WFM helpers
@@ -46,7 +45,7 @@ setEnvironment:
     - certRootCN: '/CN=NSP Development Root CA'
     - certEmail: '/emailAddress=nobody@nokia.com'
 
-    - nfmpToken: YWRtaW46Tm9raWFOc3AxIQ==
+    - nfmpAuthToken: YWRtaW46Tm9raWFOc3AxIQ==
 
   output:
     result: done
