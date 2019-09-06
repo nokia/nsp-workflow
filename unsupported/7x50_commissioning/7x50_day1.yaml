@@ -150,9 +150,9 @@ version: '2.0'
           - port 1/1/10 ethernet mode access
           - port 1/1/11 ethernet mode access
           - port 1/1/12 ethernet mode access
-          - port 1/1/10 ethernet encap-types dot1q
-          - port 1/1/11 ethernet encap-types dot1q
-          - port 1/1/12 ethernet encap-types dot1q
+          - port 1/1/10 ethernet encap-type dot1q
+          - port 1/1/11 ethernet encap-type dot1q
+          - port 1/1/12 ethernet encap-type dot1q
           - port 1/1/1 admin-state enable
           - port 1/1/2 admin-state enable
           - port 1/1/10 admin-state enable
