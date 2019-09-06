@@ -184,17 +184,15 @@ version: '2.0'
       input:
         context: <% $ %>
         script: |
-          var cliResponse = $.cliResponse;
+          var cmd = $.cliResponse;
           var status = true;
-          cliResponse.forEach(function(cmd){
-            for (var key in cmd) {
-              if (key.startsWith("cmd2")) {
-                if (!(cmd[key][1].endsWith("OK"))) {
-                  status = false;
-                }
+          for (var key in cmd) {
+            if (!(key.startsWith("cmd1"))) {
+              if (!(cmd[key][1].endsWith("OK"))) {
+                status = false;
               }
             }
-          });
+          }
           return status
       publish:
         deleted: <% task().result %>
