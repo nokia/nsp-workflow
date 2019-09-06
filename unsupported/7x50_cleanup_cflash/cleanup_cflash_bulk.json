@@ -29,7 +29,7 @@
       "defaultValue": "cf3:/act"
     },
     {
-      "description": "deletion age in seconds",
+      "description": "Deletion age in seconds",
       "name": "deleteAge",
       "title": "Age (in seconds)",
       "readOnly": false,

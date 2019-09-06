@@ -14,7 +14,7 @@ version: '2.0'
     author:  NOKIA DEMO
     version: '1.0.0'
     license: BSD-3
-    package: SROS Automation
+    package: 7x50 Automation
     deprecated: false
     urls:
       homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_cleanup_cflash
