@@ -1,0 +1,50 @@
+version: '2.0'
+
+cleanup_CA:
+  type: direct
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Cleanup PKI/CA
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_TLS
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        cleanup
+
+    cleanup:
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pkiStorepass %>'
+          cd /opt/nsp/os/ssl/certs
+          rm -rf telemetry
+          rm /etc/pki/CA/index.txt
+          rm /etc/pki/CA/crlnumber
+...

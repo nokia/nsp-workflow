@@ -1,0 +1,166 @@
+version: '2.0'
+
+7x50_day0_mdm:
+  type: direct
+
+  description: Commission 7x50 (onboarding day 0, using SNMPv2)
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   7x50 Device Commissioning for MDM management (SNMPv2, NETCONF)
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_commissioning
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - neId: '1.1.1.1'
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        checkHost
+
+    checkHost:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host:     <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - configure_node_md: <% $.hosttype = 'mdm' %>
+        - configure_node_classic: <% $.hosttype = 'nfmp' %>
+
+    configure_node_classic:
+      action: nsp.sr_cli
+      input:
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - /!classic-cli
+          - configure card 1 card-type iom3-xp
+          - configure card 1 mda 1 mda-type m60-10/100eth-tx
+          - configure card 1 mda 2 mda-type m60-10/100eth-tx
+          - "configure log file-id 10 location cf3:"
+          - configure log file-id 10 rollover 5 retention 36
+          - configure log accounting-policy 10 record complete-ethernet-port
+          - configure log accounting-policy 10 collection-interval 5
+          - configure log accounting-policy 10 default
+          - configure log accounting-policy 10 to file 10
+          - configure log accounting-policy 10 no shutdown
+          - configure port 1/1/1 ethernet collect-stats
+          - configure port 1/1/2 ethernet collect-stats
+          - configure port 1/1/10 ethernet collect-stats
+          - configure port 1/1/11 ethernet collect-stats
+          - configure port 1/1/12 ethernet collect-stats
+          - configure port 1/1/1 ethernet lldp dest-mac nearest-bridge admin-status tx-rx
+          - configure port 1/1/2 ethernet lldp dest-mac nearest-bridge admin-status tx-rx
+          - configure port 1/1/10 ethernet lldp dest-mac nearest-bridge admin-status tx-rx
+          - configure port 1/1/11 ethernet lldp dest-mac nearest-bridge admin-status tx-rx
+          - configure port 1/1/12 ethernet lldp dest-mac nearest-bridge admin-status tx-rx
+          - configure port 1/1/10 ethernet mode access
+          - configure port 1/1/11 ethernet mode access
+          - configure port 1/1/12 ethernet mode access
+          - configure port 1/1/10 ethernet encap-types dot1q
+          - configure port 1/1/11 ethernet encap-types dot1q
+          - configure port 1/1/12 ethernet encap-types dot1q
+          - configure port 1/1/1 no shutdown
+          - configure port 1/1/2 no shutdown
+          - configure port 1/1/10 no shutdown
+          - configure port 1/1/11 no shutdown
+          - configure port 1/1/12 no shutdown
+          - exit all
+          - admin save
+          - sleep 1
+      publish:
+        status: <% task().result %>
+
+    configure_node_md:
+      action: nsp.sr_cli
+      input:
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - /!md-cli
+          - configure private
+          - card 1 card-type iom3-xp
+          - card 1 mda 1 mda-type m60-10/100eth-tx
+          - card 1 mda 2 mda-type m60-10/100eth-tx
+          - log file-id 10 compact-flash-location primary cf3
+          - log file-id 10 rollover 5
+          - log file-id 10 retention 36
+          - log accounting-policy 10 record complete-ethernet-port
+          - log accounting-policy 10 collection-interval 5
+          - log accounting-policy 10 default true
+          - log accounting-policy 10 include-system-info true
+          - log accounting-policy 10 destination file 10
+          - log accounting-policy 10 admin-state enable
+          - port 1/1/1 ethernet collect-stats true
+          - port 1/1/2 ethernet collect-stats true
+          - port 1/1/10 ethernet collect-stats true
+          - port 1/1/11 ethernet collect-stats true
+          - port 1/1/12 ethernet collect-stats true
+          - configure port 1/1/1 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - configure port 1/1/2 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - configure port 1/1/10 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - configure port 1/1/11 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - configure port 1/1/12 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - configure port 1/1/10 ethernet mode access
+          - configure port 1/1/11 ethernet mode access
+          - configure port 1/1/12 ethernet mode access
+          - configure port 1/1/10 ethernet encap-types dot1q
+          - configure port 1/1/11 ethernet encap-types dot1q
+          - configure port 1/1/12 ethernet encap-types dot1q
+          - configure port 1/1/1 admin-state enable
+          - configure port 1/1/2 admin-state enable
+          - configure port 1/1/10 admin-state enable
+          - configure port 1/1/11 admin-state enable
+          - configure port 1/1/12 admin-state enable
+          - commit
+          - exit all
+          - sleep 1
+      publish:
+        status: <% task().result %>
+
+...

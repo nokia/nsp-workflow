@@ -1,0 +1,66 @@
+version: '2.0'
+
+7x50_usermgmt_campaign:
+  type: direct
+
+  description: Adds/Deletes a local CLI user to/from all Nokia 7750SR routers.
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   7x50 User-Management Campaign
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_SSH
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - workflow: 7x50_add_user
+    - sshUsername: nspuser
+    - concurrency: 1
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getHosts:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=product='7750 SR'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        neInventory: <% task().result.content.response.data %>
+      on-success:
+        - createExecutions
+
+    createExecutions:
+      with-items: host in <% $.neInventory %>
+      concurrency: <% int($.concurrency) %>
+      workflow: <% $.workflow %>
+      input:
+        token_auth: <% $.token_auth %>
+        neId: <% $.host.neId %>
+        sshUsername: <% $.sshUsername %>
+
+...

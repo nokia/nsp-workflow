@@ -1,0 +1,84 @@
+version: '2.0'
+
+7x50_day0_mdm:
+  type: direct
+
+  description: Commission 7x50 (onboarding day 0, using SNMPv2)
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   7x50 Device Commissioning for MDM management (SNMPv2, NETCONF)
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_commissioning
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - mgmtIP:
+    - systemIP:
+    - neName:
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    configure_node_classic:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!classic-cli
+          - configure system name "<% $.neName %>"
+          - configure router interface "system" address <% $.systemIP %>/32
+          - configure system security ssh preserve-key
+          - configure system snmp no shutdown
+          - configure system snmp packet-size 9216
+          - configure system security snmp community private rwa version both
+          - configure system netconf no shutdown
+          - configure system netconf auto-config-save
+          - configure system security user "admin" access console netconf
+          - configure system security profile "administrative" netconf base-op-authorization lock
+          - admin save
+          - configure system management-interface configuration-mode model-driven
+          - sleep 1
+      publish:
+        status: <% task().result %>
+      on-success:
+        - configure_node_md
+
+    configure_node_md:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!md-cli
+          - configure private
+          - system management-interface yang-modules base-r13-modules false
+          - system management-interface yang-modules nokia-modules false
+          - system management-interface yang-modules nokia-combined-modules true
+          - system management-interface yang-modules openconfig-modules true
+          - commit
+
+...
