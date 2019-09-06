@@ -142,22 +142,22 @@ version: '2.0'
           - port 1/1/10 ethernet collect-stats true
           - port 1/1/11 ethernet collect-stats true
           - port 1/1/12 ethernet collect-stats true
-          - configure port 1/1/1 ethernet lldp dest-mac nearest-bridge receive true transmit true
-          - configure port 1/1/2 ethernet lldp dest-mac nearest-bridge receive true transmit true
-          - configure port 1/1/10 ethernet lldp dest-mac nearest-bridge receive true transmit true
-          - configure port 1/1/11 ethernet lldp dest-mac nearest-bridge receive true transmit true
-          - configure port 1/1/12 ethernet lldp dest-mac nearest-bridge receive true transmit true
-          - configure port 1/1/10 ethernet mode access
-          - configure port 1/1/11 ethernet mode access
-          - configure port 1/1/12 ethernet mode access
-          - configure port 1/1/10 ethernet encap-types dot1q
-          - configure port 1/1/11 ethernet encap-types dot1q
-          - configure port 1/1/12 ethernet encap-types dot1q
-          - configure port 1/1/1 admin-state enable
-          - configure port 1/1/2 admin-state enable
-          - configure port 1/1/10 admin-state enable
-          - configure port 1/1/11 admin-state enable
-          - configure port 1/1/12 admin-state enable
+          - port 1/1/1 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/2 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/10 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/11 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/12 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/10 ethernet mode access
+          - port 1/1/11 ethernet mode access
+          - port 1/1/12 ethernet mode access
+          - port 1/1/10 ethernet encap-types dot1q
+          - port 1/1/11 ethernet encap-types dot1q
+          - port 1/1/12 ethernet encap-types dot1q
+          - port 1/1/1 admin-state enable
+          - port 1/1/2 admin-state enable
+          - port 1/1/10 admin-state enable
+          - port 1/1/11 admin-state enable
+          - port 1/1/12 admin-state enable
           - commit
           - exit all
           - sleep 1
