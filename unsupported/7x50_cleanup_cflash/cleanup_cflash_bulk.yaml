@@ -170,10 +170,10 @@ version: '2.0'
     deleteFiles:
       action: nsp.sr_cli
       input:
-        host: '<% $.host %>'
-        username: '<% $.user %>'
-        password: '<% $.passwd %>'
-        cmd: '<% $.cmdList %>'
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd: <% $.cmdList %>
       publish:
         cliResponse: <% task().result %>
       on-success:
