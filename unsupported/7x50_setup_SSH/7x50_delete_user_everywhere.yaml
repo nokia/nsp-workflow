@@ -84,7 +84,7 @@ version: '2.0'
       concurrency: <% int($.concurrency) %>
       action: nsp.sr_cli
       input:
-        host: <% $.host %>
+        host: <% $.host.ipAddress %>
         username: <% $.env.neUsername %>
         password: <% $.env.nePassword %>
         cmd:
