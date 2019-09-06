@@ -3,9 +3,10 @@ version: '2.0'
 7x50_add_user:
   type: direct
 
-  description: """Adds a local CLI user to a Nokia 7x50 router. The SSH
-  session will be authenticated without password using authentication keys.
-  The required RSA key is copied from the corresponding WFM machine."""
+  description: >
+    Adds a local CLI user to a Nokia 7x50 router. The SSH session will be
+    authenticated without password using authentication keys. The required
+    RSA key is copied from the corresponding WFM machine.
 
   tags:
     - demo workflow by NOKIA
