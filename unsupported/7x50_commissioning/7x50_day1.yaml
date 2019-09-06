@@ -1,6 +1,6 @@
 version: '2.0'
 
-7x50_day0_mdm:
+7x50_day1:
   type: direct
 
   description: Commission 7x50 (onboarding day 0, using SNMPv2)
