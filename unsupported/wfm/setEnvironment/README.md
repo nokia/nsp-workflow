@@ -33,9 +33,12 @@ Nokia NSP with Workflow Manager
 Workflow can directly be imported/updated from GitHub using the WFM WebUI.
 
 ### Usage
-Call the workflow once to initially setup you WFM environment. It will create an action called 'environment', that stores environmental settings such as
-servers, usernames and passwords to be used.
+Call the workflow once to initially setup you WFM environment. It will create
+an action called 'environment', that stores environmental settings such as
+servers, usernames and passwords to be used. Make sure to modify all values
+to fit your environment.
 
 ### License
 This project is licensed under the BSD-3 Clause License. See
-[LICENSE.md](https://raw.githubusercontent.com/nokia/nsp-workflow/master/LICENSE.md) file for details.
+[LICENSE.md](https://raw.githubusercontent.com/nokia/nsp-workflow/master/LICENSE.md)
+file for details.
