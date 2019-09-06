@@ -1,0 +1,77 @@
+---
+version: '2.0'
+
+yamlTest:
+  type: direct
+
+  description: Demo workflow for read/write YAML
+
+  tags:
+    - WFM Tutorial
+    - NSP19.6
+
+  vars:
+    playlist:
+      - Artist: Smashing Pumpkins
+        Title: Quiet
+        Details:
+          Album: Siamese Dream
+          Genre: Grunge
+          Year: 1993
+          Classification:
+            Fred: 5
+      - Artist: Madness
+        Title: One Step Beyond
+        Details:
+          Album: One Step Beyond
+          Genre: Ska
+          Year: 2014
+          Duration: 2:18min
+          Classification:
+            Fred: 3
+            Max: 3
+      - Artist: Oasis
+        Title: Hey Now!
+        Details:
+          Album: What's the Story Morning Glory?
+          Genre: Alternative & Indie
+          Duration: 5:41min
+          Classification:
+            Fred: 3
+            Max: 5
+            Emma: 2
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        writeYAML
+
+    writeYAML:
+      action: std.ssh
+      input:
+        host: <% $.env.wfmServer %>
+        username: <% $.env.wfmUsername %>
+        password: <% $.env.wfmPassword %>
+        cmd: |
+          cat <<EOF >/tmp/demo.yaml
+          <% yaml_dump($.playlist) %>
+          EOF
+      on-success:
+        - readYAML
+
+    readYAML:
+      action: std.ssh
+      input:
+        host: <% $.env.wfmServer %>
+        username: <% $.env.wfmUsername %>
+        password: <% $.env.wfmPassword %>
+        cmd: |
+          cat /tmp/demo.yaml
+      publish:
+        raw: <% task().result %>
+        obj: <% yaml_parse(task().result) %>
+
+...
