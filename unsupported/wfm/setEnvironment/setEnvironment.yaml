@@ -86,6 +86,7 @@ setEnvironment:
                 mdcPort: <% $.mdcPort %>
                 neUsername: <% $.neUsername %>
                 nePassword: <% $.nePassword %>
+                cflash: <% $.cflash %>
                 certOrg: <% $.certOrg %>
                 certRootCN: <% $.certRootCN %>
                 certEmail: <% $.certEmail %>
