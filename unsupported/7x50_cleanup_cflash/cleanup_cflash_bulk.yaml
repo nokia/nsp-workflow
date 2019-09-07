@@ -1,4 +1,3 @@
----
 version: '2.0'
 
 7x50_cleanup_cflash_bulk:
@@ -12,6 +11,7 @@ version: '2.0'
   workflow_meta:
     title:   Cleanup SR OS node cflash (bulk operation)
     author:  NOKIA DEMO
+    signature: 3b6ce2702655b675fb367a6ac29dcce617ca0b76eb881cbb47035bc5c67122c12c4310b585a56538e5ae6d4260165781b40698c33d2482ede43fd3e3eb3a4041e1bc3309cea9ee08fb55cc4cdb3026086fade1f0dbcf5c4a449fdcc6cb9cb619f68175f584cb00e5753749ff639aaa7078e4d53c1cec24512bec24c50080e5600c7d0d975f8bb4cc61544ff9b0cf6123ef316b8ddee69594cc37cde5356e1ef1d2656d819ad82f7767c2143cb3ad93931b4dd6b6d7213687da27a0b58ea75678b9153d62c0da692cb22c779e5cbe74016bc5f70de657659bebfdec9df231d19fb136ecdd745faa8ca2d3fdb8ced941f89dd509fbd49fc11290d53b584eeb5c94
     version: '1.0.0'
     license: BSD-3
     package: 7x50 Automation

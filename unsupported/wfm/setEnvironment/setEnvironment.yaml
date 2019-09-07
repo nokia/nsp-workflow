@@ -6,6 +6,7 @@ setEnvironment:
   workflow_meta:
     title:   Setup WFM environment
     author:  NOKIA DEMO
+    signature: 30c86b9b8fee3e9c2ed1a9f4445f6613d1b61f80e9e2a88140f2fff5ef0f1cca16391958a9ce4cbbbb820ece7f2af1c0edb330161f36c10192827113e096c5aaa4da47cddcc61cf253f5b72866833ba38522d6cdd5beea8396f2aeb974f758586671bcd28ebb8af94bbda57b7e985bc44ca313d80670337ddd2fffc3be25d73eb11c326726bed9bd1fb47043eeae2a597f5c62f89361b8834103437b6e4085acb8c7013c53e93b250d97bf095a0f9a7f9a9a014d7f9423b2c08096e41dde1ca8603cf5615e7270dea2f0ce4ba148cf2ee7e64a55f1be265597665da86698905dc5be682fe87f703e33dab4829ada3c11138bb7401ba21121474cc1e0476c875f
     version: '1.0.1'
     license: BSD-3
     package: WFM helpers
