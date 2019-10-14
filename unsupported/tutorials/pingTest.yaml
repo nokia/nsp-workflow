@@ -12,7 +12,7 @@ pingTest:
 
   input:
     - host: localhost
-    - duration: 10
+    - duration: 30
 
   output:
     status: done
