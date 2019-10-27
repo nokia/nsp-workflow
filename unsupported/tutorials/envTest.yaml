@@ -1,7 +1,7 @@
 ---
 version: '2.0'
 
-environmentTest:
+envTest:
   type: direct
 
   description: Demo workflow to access environment
@@ -10,38 +10,52 @@ environmentTest:
     - WFM Tutorial
     - NSP19.11
 
+  workflow_meta:
+    title:   Tutorial for expression env() and action nsp.environment
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: WFM Tutorials
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/tutorials
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.11']
+
   input:
-    - token_auth
     - envName: DefaultEnv
 
   output:
     status: done
-    envByName: <% environment($.envName) %>
+    envByName: <% env($.envName) %>
     selectedEnv: <% env() %>
-
-  output-on-error:
-    status: failed
+    result1: <% $.result1 %>
+    result2: <% $.result2 %>
 
   tasks:
     task1:
-      action: nsp.set_env
+      action: nsp.environment
       input:
         environment: <% $.envName %>
+        operation: merge
         entries:
           testvar: value
       publish:
-        result: '<% task().result %>'
+        result1: '<% task().result %>'
       publish-on-error:
-        result: '<% task().result %>'
+        result1: '<% task().result %>'
       on-complete:
         - task2
 
     task2:
       wait-before: 5
-      action: nsp.get_env
+      action: nsp.environment
       input:
-        authorization: Bearer <% $.token_auth %>
         environment: <% $.envName %>
+        operation: get
       publish:
         result2: '<% task().result %>'
       publish-on-error:

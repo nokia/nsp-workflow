@@ -1,17 +1,17 @@
 ---
 version: '2.0'
 
-pingTest:
+pathTest:
   type: direct
 
-  description: Demo workflow for ping action
+  description: Demo workflow for path expressions
 
   tags:
     - WFM Tutorial
     - NSP19.11
 
   workflow_meta:
-    title:   Tutorial for action nsp.ping
+    title:   Tutorial for path_*() expressions
     author:  NOKIA DEMO
     version: '1.0.0'
     license: BSD-3
@@ -25,29 +25,16 @@ pingTest:
       platform:
         nspOS: ['19.11']
 
-  input:
-    - host: localhost
-    - duration: 30
-
-  output:
-    status: done
-    result: <% $.result %>
-
-  output-on-error:
-    status: failed
-    result: <% $.result %>
-
   tasks:
-    pingTest:
-      action: nsp.ping
-      input:
-        host: <% $.host %>
-        duration: <% $.duration %>
-
+    expressions:
+      action: std.noop
       publish:
-        result: '<% task().result %>'
-
-      publish-on-error:
-        result: '<% task().result %>'
+        check1: <% folder_exists('/mnt') %>
+        check2: <% folder_exists('/tmp/xxx') %>
+        check3: <% folder_exists('/tmp/demo.cfg') %>
+        check4: <% file_exists('/mnt') %>
+        check5: <% file_exists('/tmp/xxx') %>
+        check6: <% file_exists('/tmp/demo.cfg') %>
+        mysize: <% get_filesize('/tmp/demo.txt') %>
 
 ...

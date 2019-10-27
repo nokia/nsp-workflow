@@ -1,17 +1,17 @@
 ---
 version: '2.0'
 
-pingTest:
+timeTest:
   type: direct
 
-  description: Demo workflow for ping action
+  description: Demo workflow for time expressions
 
   tags:
     - WFM Tutorial
     - NSP19.11
 
   workflow_meta:
-    title:   Tutorial for action nsp.ping
+    title:   Tutorial for get_local_time and () and get_UTC_time()
     author:  NOKIA DEMO
     version: '1.0.0'
     license: BSD-3
@@ -25,29 +25,15 @@ pingTest:
       platform:
         nspOS: ['19.11']
 
-  input:
-    - host: localhost
-    - duration: 30
-
   output:
     status: done
-    result: <% $.result %>
-
-  output-on-error:
-    status: failed
-    result: <% $.result %>
+    local_time: <% $.local_time %>
+    utc_time: <% $.utc_time %>
 
   tasks:
-    pingTest:
-      action: nsp.ping
-      input:
-        host: <% $.host %>
-        duration: <% $.duration %>
-
+    expressions:
+      action: std.noop
       publish:
-        result: '<% task().result %>'
-
-      publish-on-error:
-        result: '<% task().result %>'
-
+        local_time: <% get_local_time() %>
+        utc_time: <% get_UTC_time() %>
 ...

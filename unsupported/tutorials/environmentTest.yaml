@@ -1,17 +1,17 @@
 ---
 version: '2.0'
 
-pingTest:
+environmentTest:
   type: direct
 
-  description: Demo workflow for ping action
+  description: Demo workflow to access environment
 
   tags:
     - WFM Tutorial
     - NSP19.11
 
   workflow_meta:
-    title:   Tutorial for action nsp.ping
+    title:   Tutorial for expression action nsp.environment
     author:  NOKIA DEMO
     version: '1.0.0'
     license: BSD-3
@@ -26,28 +26,30 @@ pingTest:
         nspOS: ['19.11']
 
   input:
-    - host: localhost
-    - duration: 30
+    - envName: "Test Environment"
+    - operation: replace
+    - entries: {}
 
   output:
     status: done
-    result: <% $.result %>
 
   output-on-error:
     status: failed
-    result: <% $.result %>
 
   tasks:
-    pingTest:
-      action: nsp.ping
+    task1:
+      action: nsp.environment
       input:
-        host: <% $.host %>
-        duration: <% $.duration %>
+        environment: <% $.envName %>
+        operation: get
+      on-complete:
+        - task2
 
-      publish:
-        result: '<% task().result %>'
-
-      publish-on-error:
-        result: '<% task().result %>'
+    task2:
+      action: nsp.environment
+      input:
+        environment: <% $.envName %>
+        operation: <% $.operation %>
+        entries: <% $.entries %>
 
 ...
