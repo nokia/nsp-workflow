@@ -1,0 +1,96 @@
+---
+version: '2.0'
+
+nsp.neList.fake:
+  description: get list of managed devices (fake callout)
+  base: std.echo
+  base-input:
+    output:
+      response:
+        data:
+          - operState: enabled
+            resyncState: done
+            communicationState: up
+            neName: Berlin
+            description:
+            managedState: managed
+            adminState: unlocked
+            version: 'TiMOS-B-19.5.R2 '
+            location: N/A
+            type: 7750-SR12
+            product: 7750 SR
+            sourceType: nfmp
+            networkType: ip
+            name: Berlin
+            neId: 1.1.1.2
+            ipAddress: 135.228.154.179
+          - operState: enabled
+            resyncState: done
+            communicationState: up
+            neName: Antwerp
+            description:
+            managedState: managed
+            adminState: unlocked
+            version: 'TiMOS-B-19.5.R2 '
+            location: hamburg
+            type: 7750-SR12
+            product: 7750 SR
+            sourceType: nfmp
+            networkType: ip
+            name: Antwerp
+            neId: 1.1.1.1
+            ipAddress: 135.228.149.107
+          - operState: enabled
+            resyncState: done
+            neName: Sydney
+            description: |-
+              TiMOS-B-19.7.R1 both/x86_64 Nokia 7750 SR Copyright (c) 2000-2019 Nokia.
+              All rights reserved. All use subject to applicable license agreements.
+              Built on Wed Jul 31 13:52:55 PDT 2019 by builder in /builds/c/197B/R1/panos/main
+            managedState: managed
+            adminState: unlocked
+            version: TiMOS-B-19.7.R1
+            location:
+            standbyState: providingService
+            latitude:
+            type: 7750 SR-12
+            product: 7750 SR
+            sourceType: mdm
+            sourceSystem: fdn:app:mdm-ami-cmodel
+            name: Sydney
+            neId: 1.1.1.5
+            communicationStateDetails:
+              ping://135.228.154.220:
+                lastAttempt: 1572255982542
+                state: up
+                protocol: PING
+                address: 135.228.154.220
+            ipAddress: 135.228.154.220
+
+          - operState: enabled
+            resyncState: done
+            neName: Auckland
+            description: |-
+              TiMOS-B-19.7.R1 both/x86_64 Nokia 7750 SR Copyright (c) 2000-2019 Nokia.
+              All rights reserved. All use subject to applicable license agreements.
+              Built on Wed Jul 31 13:52:55 PDT 2019 by builder in /builds/c/197B/R1/panos/main
+            managedState: managed
+            adminState: unlocked
+            version: TiMOS-B-19.7.R1
+            standbyState: providingService
+            type: 7750 SR-12
+            product: 7750 SR
+            sourceType: mdm
+            networkType: unknown
+            name: Auckland
+            neId: 1.1.1.3
+            communicationStateDetails:
+              ping://135.228.147.252:
+                lastAttempt: 1572256172537
+                state: up
+                protocol: PING
+                address: 135.228.147.252
+            ipAddress: 135.228.147.252
+
+  input:
+   - token_auth

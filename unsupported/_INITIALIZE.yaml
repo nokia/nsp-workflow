@@ -11,11 +11,11 @@ _initialize:
     - NSP19.11
 
   workflow_meta:
-    title:   Setup setup for tutorials and demos
+    title:   Setup environment for tutorials and demos
     author:  NOKIA DEMO
     version: '1.0.0'
     license: BSD-3
-    package: BASE
+    package: SETUP
     deprecated: false
     urls:
       homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/tutorials
@@ -144,7 +144,7 @@ _initialize:
     createEnvironment:
       action: nsp.environment
       input:
-        environment: demo
+        environment: DemoWFM
         operation: replace
         entries:
           pkiServer: localhost
@@ -164,7 +164,10 @@ _initialize:
           cflash: cf3
           certOrg: '/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM'
           certRootCN: '/CN=NSP Development Root CA'
-          certEmail: '/emailAddress=nobody@nokia.com'
+          certEmail: '/emailAddress=wfm@nokia.com'
+          mailFrom: 'wfm@nokia.com'
+          mailToList: 'ops@acme-networks.com'
+          mailServer: 'localhost:25'
           nfmpAuthToken: YWRtaW46Tm9raWFOc3AxIQ==
 
 ...

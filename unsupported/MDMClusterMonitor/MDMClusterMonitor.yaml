@@ -1,0 +1,63 @@
+version: '2.0'
+
+MDMClusterMonitor:
+  description: 'MDM Cluster state notification'
+  type: direct
+
+  tags:
+    - KafkaTrigger
+    - WFM Demo
+    - NSP19.11
+
+  workflow_meta:
+    title:   MDM Cluster Report
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: WFM Demos
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/tutorials
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.11']
+
+  input:
+    - token_auth
+    - payload: 'Not Required'
+
+  output:
+    result: <% $.html %>
+
+  vars:
+    reportTemplate: <% fetch_jinja('ClusterReportHTML') %>
+
+  tasks:
+    getClusterInfo:
+      action: std.http
+      input:
+        url: 'https://<% locate_nsp() %>:8545/mdm-necontrol-rest-api-app/api/v1/restconf/operations/getSystemInfo'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        clusterInfo: <% task().result.content.response.data %>
+      on-success:
+        - sendEmail
+
+    sendEmail:
+      action: std.email
+      input:
+        from_addr: {% env().mailFrom %}
+        to_addrs: {% env().mailToList %}
+        smtp_server: {% env().mailServer %}
+        subject: 'MDM Server Group Leadership Change Detected'
+        html_body: <% resolve_jinja($.reportTemplate, $.clusterInfo) %>
+      publish:
+        html: <% resolve_jinja($.reportTemplate, $.clusterInfo) %>
+
+...

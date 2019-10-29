@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "properties": [
+    {
+      "description": "NE Id",
+      "name": "neId",
+      "title": "NE Id",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string",
+      "enum": null,
+      "group": "auto",
+      "defaultValue":
+      "component": {
+        "input": "autoComplete"
+      },
+      "suggest": {
+        "action": "nsp.neList",
+        "name": [
+          {
+            "host": "neId"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -12,6 +12,7 @@ fileReader:
 
   workflow_meta:
     title:   Tutorial for file.read action (various input formats)
+    author:  NOKIA DEMO
     version: '1.0.0'
     license: BSD-3
     package: WFM Tutorials

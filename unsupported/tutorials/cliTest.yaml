@@ -197,3 +197,5 @@ cliTest:
         queryParams: {}
       publish:
         testReuseSessions: <% task().result %>
+
+...
