@@ -38,7 +38,7 @@ ManagedNeReport:
       input:
         token_auth: <% $.token_auth %>
       publish:
-        neList: <% task().result.response %>
+        neList: <% task().result.content.response %>
       on-success:
         - sendEmail
 
