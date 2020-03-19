@@ -38,7 +38,7 @@ The following needs to be configured in order to use site health monitoring func
 
 1) Create a new kafka Trigger on WFM WebUI
 
-```
+```yaml
 Workflow name: switchover
 Trigger rule: $[?(@.alarmName == 'CprotoChannelDown' && @.severity == 'major')]
 Kafka topic: nsp-db-fm
