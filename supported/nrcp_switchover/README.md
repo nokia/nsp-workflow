@@ -12,9 +12,9 @@ NRCP - site health monitoring - version 1.0
 Support signed version
 
 ### History
-|Version|Author|Date      |Comments     |
-|:-------|:------|:----------|:-------------|
-|   1.0 |  SW  |2019-11-13|NSP19.11 updates|
+|Version|Author|Date      |Comments                    |
+|:------|:-----|:---------|:---------------------------|
+|   1.0 |  SW  |2020-03-19|Initial version for nsp19.11|
 
 ### Prerequisites
 Nokia NSP with Workflow Manager and NRCP
@@ -38,15 +38,13 @@ The following needs to be configured in order to use site health monitoring func
 
 1) Create a new kafka Trigger on WFM WebUI
 
+```
 Workflow name: switchover
-
 Trigger rule: $[?(@.alarmName == 'CprotoChannelDown' && @.severity == 'major')]
-
 Kafka topic: nsp-db-fm
-
 Kafka Event: create
-
 Enabled: True
+```
 
 2) Add the following items in Environment file DefaultEnv using the WFM WebUI
 
