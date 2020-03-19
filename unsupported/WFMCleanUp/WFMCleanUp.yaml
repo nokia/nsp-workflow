@@ -11,10 +11,9 @@ cleanup_WFM:
   workflow_meta:
     title:   Cleanup WFM results
     author:  NOKIA DEMO
-    signature: 03e8aabf171b21863a67b3072ef363293c984c69882d94f8220534c0fe4402fc00bfa562f5a2ee82501b2bd302624fa79c579e0f63e31a6ca18ac191380fcf401c2547724120de8e82be282a0bb063158163fd04c3e7b62da82750ab0aca2813f2d3fecb4574a6855a3ed0d588c9b2e9081c3041341ddbdc539f5d05150939f0d27170e076cea8732054ea748ed0e7bc88bdb1f6d74601ff5c513b1b646a9aa393522b798a770f24d5b596cd36dd54ecbca7dce4d7884bec991a162b6c621d0a1845cc9a51a4f358030e31ac5cbc02fbd80d84143b4bbf70edb6f044b100a17c58834129e235cacf83b8f01e085cdeb1b0ec88ba27a7e627a7cf612d2a8b027e
-    version: '1.0.1'
+    version: '1.0.0'
     license: BSD-3
-    package: WFM helpers
+    package: WFM Helpers
     deprecated: false
     urls:
       homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/wfm/cleanup_WFM

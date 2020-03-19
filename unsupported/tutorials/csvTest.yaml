@@ -10,6 +10,21 @@ csvTest:
     - WFM Tutorial
     - NSP19.11
 
+  workflow_meta:
+    title:   Tutorial for csv_dump and csv_parse
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: WFM Tutorials
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/tutorials
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.11']
+
   vars:
     jukebox: |
       Artist;Album;Genre;Year
@@ -50,13 +65,13 @@ csvTest:
     csvTest:
       action: std.echo
       input:
-      output:
-        jukebox_csv: <% $.jukebox %>
-        jukebox_obj: <% csv_parse($.jukebox) %>
-        playlist_obj: <% $.playlist %>
-        playlist_csv1: <% csv_dump($.playlist, 1) %>
-        playlist_csv2: <% csv_dump($.playlist, 2) %>
-        playlist_csv3: <% csv_dump($.playlist, 3) %>
+        output:
+          jukebox_csv: <% $.jukebox %>
+          jukebox_obj: <% csv_parse($.jukebox) %>
+          playlist_obj: <% $.playlist %>
+          playlist_csv1: <% csv_dump($.playlist, 1) %>
+          playlist_csv2: <% csv_dump($.playlist, 2) %>
+          playlist_csv3: <% csv_dump($.playlist, 3) %>
       publish:
         result: <% task().result %>
 

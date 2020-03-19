@@ -1,0 +1,64 @@
+---
+version: '2.0'
+
+fileTest:
+  type: direct
+
+  description: Demo workflow for read/write to file
+
+  tags:
+    - WFM Tutorial
+    - NSP19.11
+
+  workflow_meta:
+    title:   Tutorial for file.* actions
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: WFM Tutorials
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/tutorials
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.11']
+
+  tasks:
+    task1:
+      action: file.write
+      input:
+        data: bla bla bla
+        filename: 123.txt
+        folder: /tmp
+      on-success:
+        - task2
+
+    task2:
+      action: file.read
+      input:
+        filename: 123.txt
+        folder: /tmp
+        options: raw
+      on-success:
+        - task3
+
+    task3:
+      action: file.rename
+      input:
+        old: 123.txt
+        new: 456.txt
+        folder: /tmp
+      on-success:
+        - task4
+
+    task4:
+      action: file.remove
+      input:
+        folder: /tmp
+        filenames:
+          - 123.txt
+          - 456.txt
+
+...
