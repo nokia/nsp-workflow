@@ -1,0 +1,16 @@
+version: '2.0'
+
+sferic.ranApplicationByMrbtsId:
+  description: get list of ran applications of a MRBTS
+  base: std.http
+  base-input:
+    url: http://ran-services-app.default.svc.cluster.local:8080/ran-services-app/rest/api/v1/ran-application?mrbtsid=<% $.formValues.mrbts %>
+    method: GET
+    verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer <% $.token_auth %>
+  input:
+    - token_auth
+    - formValues: ""
+  output: <% $.content %>
