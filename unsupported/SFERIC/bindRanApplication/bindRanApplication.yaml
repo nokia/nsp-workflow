@@ -1,0 +1,88 @@
+version: '2.0'
+
+bindRanApplication:
+  type: direct
+
+  description: Bind BTS RAN Application to transport IP service
+  
+  workflow_meta:
+    title:   TBTS RAN Application tansport management
+    author:  NOKIA
+    signature:
+    version: '1.0.0'
+    license: BSD-3
+    package: TBTS Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/sferic
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['20.9']
+      nodal:
+        - type: 'tbts'
+          releases: ['v1']
+          mgmtmode: ['model-driven']
+  
+  input:
+   - mrbts
+   - ranapplication
+   - transportservice
+   - ipAddressv4 : ''
+   - ipAddressv6 : ''
+   - vlan
+
+  tasks: 
+    formatTransportIp:
+      action: std.js
+      input:
+        context: <% $ %>
+        script: |
+          var fulladdress = $.ipAddressv4;
+          if (fulladdress.length == 0) {
+            fulladdress = $.ipAddressv6;
+          }  
+          var str = fulladdress.split("/");
+          var ip = str[0];
+          return ip;
+      publish:
+        transportIp: <% task().result %>
+      on-success:
+        - formatNetmask  
+
+    formatNetmask:
+      action: std.js
+      input:
+        context: <% $ %>
+        script: |
+          var fulladdress = $.ipAddressv4;
+          if (fulladdress.length == 0) {
+            fulladdress = $.ipAddressv6;
+          }
+          var str = fulladdress.split("/");
+          var mask = str[str.length-1];
+          return mask;
+      publish:
+        transportMask: <% task().result %>
+      on-success:
+        - bindRanApplication  
+        
+    bindRanApplication:
+      action: std.http
+      input:
+        url: http://ran-services-app.default.svc.cluster.local:8080/ran-services-app/rest/api/v1/ran-application
+        method: PATCH
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% env().token_auth %>
+        body:
+          - ranApplicationName: <% $.ranapplication %> 
+            mrbtsId: <% $.mrbts %>
+            transportIpAddress: <% $.transportIp %>
+            vlanId: <% $.vlan %>
+            transportIpPrefixLength: <% $.transportMask %>
+      publish-on-error:
+        reason: <% task().result.status %>
+

@@ -1,0 +1,50 @@
+version: '2.0'
+
+unbindRanApplication:
+  type: direct
+ 
+  description: UnBind BTS RAN Application to transport IP service
+  
+  workflow_meta:
+    title:   TBTS RAN Application tansport management
+    author:  NOKIA
+    signature:
+    version: '1.0.0'
+    license: BSD-3
+    package: TBTS Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/sferic
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['20.9']
+      nodal:
+        - type: 'tbts'
+          releases: ['v1']
+          mgmtmode: ['model-driven']
+  
+  input:
+   - mrbts
+   - ranapplication
+   
+  tasks: 
+         
+    unbindRanApplication:
+      action: std.http
+      input:
+        url: http://ran-services-app.default.svc.cluster.local:8080/ran-services-app/rest/api/v1/ran-application
+        method: PATCH
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% env().token_auth %>
+        body:
+          - ranApplicationName: <% $.ranapplication %> 
+            mrbtsId: <% $.mrbts %>
+            transportIpAddress: ""
+            vlanId: -1
+            transportIpPrefixLength: 0
+      publish-on-error:
+        reason: <% task().result.status %>

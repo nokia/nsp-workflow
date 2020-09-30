@@ -1,0 +1,101 @@
+version: '2.0'
+
+getRanApplicationReport:
+  type: direct
+
+  description: List all the BTS RAN Application
+  
+  workflow_meta:
+    title:   TBTS RAN Application tansport management
+    author:  NOKIA
+    signature:
+    version: '1.0.0'
+    license: BSD-3
+    package: TBTS Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/sferic
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['20.9']
+      nodal:
+        - type: 'tbts'
+          releases: ['v1']
+          mgmtmode: ['model-driven']
+  
+  output:
+    result: <% $.html %>
+
+  tasks:
+    getRanApplication:
+      action: std.http
+      input:
+        url: http://ran-services-app.default.svc.cluster.local:8080/ran-services-app/rest/api/v1/ran-application
+        method: GET
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
+        headers:
+          Authorization: Bearer <% env().token_auth %>
+      publish:
+        ranApplicationList: <% task().result.content %>
+      on-success:
+        - dumpReport
+
+    dumpReport:
+      action: std.noop
+      publish:
+        html: |
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                table {font-family: NokiaPure, sans-serif;border-collapse: collapse;width: 100%;}
+                td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}
+                tr:nth-child(even) {background-color: #dddddd;}
+                lime {margin-left: 19px;height: 12px;width: 12px;background-color: lime;border-radius: 50%;display: inline-block;}
+                red {margin-left: 19px;height: 12px;width: 12px;background-color: red;border-radius: 50%;display: inline-block;}
+              </style>
+            </head>
+            <body>
+              <span style="font-size: 1.5em; font-weight: 600; margin:10px; font-family: NokiaPure, sans-serif;">RAN Application Report</span>
+              <div style="padding-right: 10px;">
+                <table>
+                  <tr>
+                    <th>MRBTS</th>
+                    <th>Application</th>
+                    <th>Application Name</th>
+                    <th>Op State</th>
+                    <th>Application Type</th>
+                    <th>IP Address Type</th>
+                    <th>SD</th>
+                    <th>SST</th>
+                    <th>IP Address</th>
+                    <th>Prefix</th>
+                    <th>VLAN ID</th>
+                    <th>MRBTS Port</th>
+                    <th>Router</th>
+                    <th>Router Port</th>
+                    <th>IP Service</th>
+                  </tr>
+                  {% for item in _.ranApplicationList %}<tr>
+                    <td>{{ item.mrbtsId }}</td>
+                    <td>{{ item.ranApplicationName }}</td>
+                    <td>{{ item.ranApplicationDisplayedName }}</td>
+                    <td>{{ item.operationalState }}</td>
+                    <td>{{ item.applicationType }}</td>
+                    <td>{{ item.ipAddressType }}</td>
+                    <td>{{ item.sd }}</td>
+                    <td>{{ item.sst }}</td>
+                    <td>{{ item.transportIpAddress }}</td>
+                    <td>{{ item.transportIpPrefixLength }}</td>
+                    <td>{{ item.vlanId }}</td>
+                    <td>{{ item.mrbtsPortName }}</td>
+                    <td>{{ item.routerName }}</td>
+                    <td>{{ item.routerPortName }}</td>
+                    <td>{{ item.transportDisplayedName }}</td>
+                  </tr>{% endfor %}
+                </table>
+              </div>
+            </body>
+          </html>

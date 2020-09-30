@@ -1,0 +1,16 @@
+version: '2.0'
+
+sferic.mrbtsList:
+  description: get list of managed MRBTS
+  base: std.http
+  base-input:
+    url: https://135.121.156.163:8544/NetworkSupervision/rest/api/v1/networkElements?filter=<% url_encode("neName LIKE 'MRBTS%'") %> 
+    method: GET
+    verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer <% $.token_auth %>
+  input:
+    - token_auth
+    - formValues: ""
+  output: <% $.content.response.data %>
