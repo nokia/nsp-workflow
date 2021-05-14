@@ -1,0 +1,94 @@
+version: '2.0'
+
+cleanup_WFM:
+  type: direct
+
+  description: Delete workflow execution results for house-keeping
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Cleanup WFM results
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: WFM Helpers
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/wfm/cleanup_WFM
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+
+  input:
+    - token_auth:
+    - workFlowName:
+    - workFlowState: SUCCESS
+    - deleteBefore:
+    - deleteAge: 3601
+
+  vars:
+    wfmAPI: "https://<% locate_nsp() %>:8546/wfm/api"
+
+  output:
+    result: done
+    wfmResultsDeleted: <% $.wfmResults %>
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getQueryFilter:
+      action: std.javascript
+      safe-rerun: true
+      input:
+        context: <% $ %>
+        script: |
+          var delTime = new Date()
+          if ($.deleteAge > 0) {
+            delTime = new Date(delTime - 1000*$.deleteAge);
+          } else if ($.deleteBefore != '') {
+            delTime = new Date($.deleteBefore)
+          }
+          var filter = "?created_at=lt:";
+          filter += delTime.getUTCFullYear() + "-" + (delTime.getUTCMonth()+1) + "-" + delTime.getUTCDate();
+          filter += "%20";
+          filter += delTime.getUTCHours() + ":" + delTime.getUTCMinutes() + ":" + delTime.getUTCSeconds();
+
+          if ($.workFlowName != '') {
+            filter = filter + "&workflow_name=" + $.workFlowName;
+          }
+          if ($.workFlowState != '') {
+            filter = filter + "&state=" + $.workFlowState;
+          }
+          return filter;
+      publish:
+          queryFilter: <% task().result %>
+      on-success:
+        - getFilteredRuns
+
+    getFilteredRuns:
+      action: nsp.https
+      safe-rerun: true
+      input:
+        url: <% $.wfmAPI %>/v1/execution<% $.queryFilter %>&limit=100
+        resultFilter: "$.content.response.data.id"
+      publish:
+        wfmResults:  <% task().result.content %>
+      on-success:
+       - deleteExecutions: <% $.wfmResults.len() > 0 %>
+
+    deleteExecutions:
+      with-items: id in <% $.wfmResults %>
+      action: nsp.https
+      input:
+        url: <% $.wfmAPI %>/v1/execution/<% $.id %>
+        method: DELETE
+      concurrency: 8
+      on-complete:
+        - getFilteredRuns
+
+...
