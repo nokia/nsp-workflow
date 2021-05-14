@@ -1,0 +1,221 @@
+version: '2.0'
+
+switchover:
+  type: direct
+  tags:
+    - KafkaTrigger    
+    - IP MPLS Optimization   
+    
+  workflow_meta:
+    title:   NRCP site health monitoring  
+    version: '1.0.0'
+    author: 'NOKIA R&D'
+    signature: 6ddaa43a6a124991a54d6d0269ec7340de19a14ffdf7aa8921fc82f9865326734241f9437a99a145a5b4228c92c67e73adef1eb012555409d2e126968881b0ae3ebffae0a33a5dcae8240a64d1bbc762c801c41964d155360fe55cc1f2b0f5c49fad535853ce424de1305548e984ecd59ae1a9c138603d15361661db3686784d8c23c265a9dca7afccc8a9c9770e68e013cb8c11d009b00d988f5edbe48523ca8f8ded5501830ad811ccc34bd9e603d9e2228562d9164d5688487e9573b6d159ef19a01a9ad5c427fb8fa566d4b411914612d0d5362be2451254b5cb3a1de71a4fd1cab3806f329cd8375d0264a58b748c58420bfb2aaff691310cc4c5dd19bc
+    license: X
+    package: NRCP
+    deprecated: false
+    urls:
+      homepage: http://orbw-git.ca.alcatel-lucent.com/mskhan1/nsp-workflows/tree/master/NspSupportedWorkflows
+      repository: http://orbw-git.ca.alcatel-lucent.com/mskhan1/nsp-workflows
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.11']
+    
+  input:
+    - envName: DefaultEnv
+    - token: ""
+    - payload: ""
+    
+  output-on-error:
+    result: <% $.result_err %>
+    
+  tasks:
+    get_environment:
+      action: nsp.environment
+      input: 
+        environment: "<% $.envName %>"
+        operation: "get"
+      publish:
+        env: <% task().result.entries %>
+      publish-on-error:
+        result2: <% task().result %>
+      on-success:
+        - get_system_status
+    
+    get_system_status:
+      action: std.ssh
+      description: "get system status"
+      input:
+        host: <% $.env.site2_vip_advertised %>
+        username: <% $.env.username %>
+        password: <% $.env.password %>
+        cmd: |
+          curl -k --cert /opt/nsp/os/nspd/server.pem --key /opt/nsp/os/nspd/server.key -X GET https://127.0.0.1:2390/system/status 
+      publish: 
+       obj_sys_status: <% json_parse(task().result) %>
+      on-success:
+        - parse_system_status 
+    
+    parse_system_status:
+      action: std.javascript
+      input: 
+        context: <% $ %>
+        script: |
+          var leaders = [];    
+          $.obj_sys_status.forEach(function(element) {
+             if (element.role === "leader" && element.dcrole === "active") {
+                var n = element.endpoint.indexOf(":2390");
+                leaders[0] = element.endpoint.substring(8, n);
+             }
+             if (element.role === "leader" && element.dcrole === "standby") {
+                leaders[1] = element.endpoint.substring(8, element.endpoint.indexOf(":2390"));
+             }
+          });
+          return leaders;
+      publish: 
+        leaders: <% task(parse_system_status).result %> 
+      on-success: 
+        - get_rest_gateway
+        
+        
+    get_rest_gateway:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var rest_host = $.env.site1_vip_advertised;
+          if ($.leaders[0] === $.env.site2_sdn1 || $.leaders[0] === $.env.site2_sdn2 || $.leaders[0] === $.env.site2_sdn3) {
+           rest_host = $.env.site2_vip_advertised;
+          }    
+          return rest_host;
+      publish:
+        rest_gateway_ip: <% task(get_rest_gateway).result %>
+      on-success:
+        - wait_and_check_alarm      
+
+    wait_and_check_alarm:
+      wait-before: <% $.env.delay %>
+      action: std.http
+      input:
+        url: "https://<% $.rest_gateway_ip %>:8544/FaultManagement/rest/api/v2/alarms/details?propertyList=alarmName&alarmFilter=alarmName='CprotoChannelDown'"
+        method: GET
+        verify: False
+        headers:
+          Authorization: '<% $.token %>'
+      publish:
+        cproto_alarm_number: <% task().result.content.response.totalRows %>
+      publish-on-error:
+        errors: "<% task().result %>"
+      on-success:
+        - get_remote_vsr: <% $.cproto_alarm_number != 0 %>    
+        
+    get_remote_vsr:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var remote_vsr = $.env.site2_vsr;
+          if ($.rest_gateway_ip === $.env.site2_vip_advertised) {
+              remote_vsr = $.env.site1_vsr;
+          }
+          return remote_vsr;
+      publish:
+        remote_vsr: <% task().result %>
+      on-success:
+      - ping_remote_vsrnrc  
+     
+    ping_remote_vsrnrc:      
+      action: nsp.ping
+      input:
+        host: <% $.remote_vsr %>
+        duration: <% $.env.ping_duration %>
+      publish:
+        result: '<% task().result.success %>'
+      publish-on-error:
+        result_err: '<% task().result %>'
+      on-success: 
+       - switch_local_cluster_to_standby : <% $.result = true %>     
+   
+    switch_local_cluster_to_standby:
+      action: std.ssh
+      description: "change the current active cluster to standby"
+      input:
+        host: <% $.leaders[0] %>
+        username: <% $.env.username %>
+        password: <% $.env.password %>
+        cmd: |
+          echo "sleep 10" > toStandby.sh
+          echo "nspdctl to-standby" >> toStandby.sh
+          chmod +x toStandby.sh
+          nohup ./toStandby.sh > /dev/null 2>&1 & 
+      publish:
+        result: '<% task().result %>'
+      on-success:
+        - switch_remote_cluster_to_active
+  
+    switch_remote_cluster_to_active:
+      action: std.ssh
+      description: "change the previous standby cluster to active "
+      input:
+        host: <% $.leaders[1] %>
+        username: <% $.env.username %>
+        password: <% $.env.password %>
+        cmd: |
+          echo "sleep 15" > toActive.sh
+          echo "nspdctl to-active" >> toActive.sh
+          chmod +x toActive.sh
+          nohup ./toActive.sh > /dev/null 2>&1 &
+      publish: 
+        task_result: '<% task().result %>'
+      on-success:
+       - get_remote_WFM
+      
+    get_remote_WFM:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var remote_WFM = $.env.site2_wfm;
+          if ($.rest_gateway_ip === $.env.site2_vip_advertised) {
+              remote_WFM = $.env.site1_wfm;
+          }
+          return remote_WFM;
+      publish:
+        remote_WFM: <% task().result %>
+      on-success:
+      - switch_local_WFM_to_standby        
+      
+    switch_local_WFM_to_standby:
+      action: std.ssh
+      description: "change the current active WFM to standby"
+      input:
+        host: localhost
+        username: <% $.env.username %>
+        password: <% $.env.password %>
+        cmd: |
+          echo "sleep 10" > toStandby.sh
+          echo "nspdctl to-standby" >> toStandby.sh
+          chmod +x toStandby.sh
+          nohup ./toStandby.sh > /dev/null 2>&1 & 
+      publish:
+        result: '<% task().result %>'
+      on-success:
+        - switch_remote_WFM_to_active
+   
+    switch_remote_WFM_to_active:
+      action: std.ssh
+      description: "change the previous standby WFM to active "
+      input:
+        host: <% $.remote_WFM %>
+        username: <% $.env.username %>
+        password: <% $.env.password %>
+        cmd: |
+          echo "sleep 15" > toActive.sh
+          echo "nspdctl to-active" >> toActive.sh
+          chmod +x toActive.sh
+          nohup ./toActive.sh > /dev/null 2>&1 &
+      publish: 
+        task_result: '<% task().result %>'
+        
+        
