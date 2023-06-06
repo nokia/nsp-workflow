@@ -1,0 +1,11 @@
+{
+    "operation-type": {
+        "name": "lso-multiphase-demo",
+        "description": "Operation Manager Multi-Phase Demo",
+        "category": "other",
+        "created-by": "nsp_internal_system_user",
+        "operation-model": "lso-multiphase-demo.yang",
+        "profile": "lso-multiphase-demo.yaml",
+        "life-cycle-state": "released"
+    }
+}

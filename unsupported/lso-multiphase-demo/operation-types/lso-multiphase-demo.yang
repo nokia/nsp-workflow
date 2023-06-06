@@ -1,0 +1,56 @@
+module lso-multiphase-demo {
+  yang-version 1.1;
+  namespace "urn:nokia:nsp:model:lso:operation:lsomultiphasedemo";
+  prefix lsomultiphasedemo;
+
+  import nsp-lso-operation {
+    prefix nlo;
+  }
+
+  organization
+    "Nokia";
+  contact
+    "Nokia NSP Support Web <https://www.nokia.com>";
+  description
+    "Operation Manager Multi-Phase Demo - Operation Model";
+
+  revision 2023-06-06 {
+    description
+      "Initial revision.";
+    reference
+      "";
+  }
+
+  augment "/nlo:lso-operations/nlo:operation" {
+    when "operation-type='lso-multiphase-demo'";
+    description
+      "Augmentation of lso-multiphase-demo operation config data.";
+    container lso-multiphase-demo-operation {
+      description
+        "Config data container for multiphase demo operation.";
+      leaf failOnNeId {
+        type string;
+        default "0.0.0.0";
+      }
+      leaf passRatio {
+        type uint8 {
+          range "0 .. 100";
+        }
+        default 100;
+      }
+    }
+  }
+
+  augment "/nlo:lso-operations/nlo:operation/nlo:executions/nlo:execution" {
+    when "../../operation-type='lso-multiphase-demo'";
+    description
+      "Augmentation of lso-multiphase-demo execution state data.";
+    container lso-multiphase-demo-execution {
+      description
+        "State data container for NE upgrade execution.";
+      leaf number {
+        type uint8;
+      }
+    }
+  }
+}

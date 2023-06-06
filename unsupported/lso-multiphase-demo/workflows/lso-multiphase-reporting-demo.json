@@ -1,0 +1,32 @@
+{
+    "type": "object",
+    "properties": [
+      {
+        "name": "passRatio",
+        "title": "PASS RATIO",
+        "description": "description for passRatio",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "number",
+        "default": 100
+      },
+      {
+        "name": "failOnNeId",
+        "title": "FAIL ON NE ID",
+        "description": "description for failOnNeId",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "string",
+        "default": "0.0.0.0",
+        "validations": {
+          "patterns": [
+            "^(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))$"
+          ]
+        }
+      }
+    ]
+  }

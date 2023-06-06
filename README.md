@@ -13,7 +13,7 @@ to import the workflow into your WFM instance.
 
 ## License
 This project is licensed under the BSD-3 Clause License. See
-[LICENSE.md](https://raw.githubusercontent.com/nokia/nsp-workflow/master/LICENSE) file for details.
+[LICENSE](https://raw.githubusercontent.com/nokia/nsp-workflow/master/LICENSE) file for details.
 
 
 ## Contributing

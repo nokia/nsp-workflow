@@ -1,0 +1,146 @@
+---
+version: '2.0'
+
+lso-multiphase-execution-demo:
+  type: direct
+
+  tags:
+    - LSO
+    - device operations demo
+
+  input:
+    - neId
+    - delay: 3
+    - passRatio: 100
+    - failOnNeId: 0.0.0.0
+    - skipNodeCheck: true
+    - skipRatioCheck: true
+
+  vars:
+    lsoInfo: "Failed"
+    lsoStageError: "unknown"
+
+  output:
+    lsoInfo: <% $.lsoInfo %>
+
+  output-on-error:
+    lsoInfo: <% $.lsoInfo %>
+    lsoStageError: <% $.lsoStageError %>
+
+  tasks:
+    lsoStageMapping:
+      action: std.noop
+      publish:
+        foldername: "/deviceOperations/multiStepDemo/<% $.neId %>"
+        filename: report_<% get_local_time("%Y-%m-%d_%H%M%S") %>.csv
+
+        lsoWorkflowStageMapping:
+          lso-multiphase-execution-demo:
+          - step1
+          - step2
+          - step3
+          - step4
+          - step5
+          - step6
+          - step7
+      on-success:
+        - step1
+
+    step1:
+      action: std.echo output=<% random(0,100) %>
+      publish:
+        lsoInfo: 'Initial step 1 successfully done, number is <% task().result %>'
+        number: <% task().result %>
+      on-success:
+        - step2
+
+    step2:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        idleTimeOut: 60
+        cmds:
+          - show system information
+          - show service service-using
+          - show router arp
+          - show router route-table 
+      publish:
+        lsoInfo: 'Step 2 successfully done | CLI executed'
+        nodeInfo: <% task().result.responses %>
+      on-success:
+        - step3
+        
+    step3:
+      action: nsp.https
+      input:
+        method: GET
+        url: "https://file-service/nsp-file-service-app/rest/api/v1/directory?dirName=<% $.foldername %>"
+      publish:
+        lsoInfo: 'Step 3 successfully done | Folder exists'
+      publish-on-error:
+        lsoInfo: 'Step 3 successfully done | Folder does not exists'
+      on-success:
+        - step5        
+      on-error:
+        - step4
+
+    step4:
+      action: nsp.https
+      input:
+        url: "https://file-service/nsp-file-service-app/rest/api/v1/directory?dirName=<% $.foldername %>"
+        method: POST
+      publish:
+        lsoInfo: 'Step 4 successfully done | Folder created'
+      publish-on-error:
+        lsoStageError: <% task().result %>
+        lsoInfo: "Create output directory on file-service failed."  
+      on-success:
+        - step5
+        
+    step5:
+      action: nsp.https
+      input:
+        method: POST
+        url: https://file-service/nsp-file-service-app/rest/api/v1/file/uploadTextToFile
+        body:
+          dirName: <% $.foldername %>
+          fileName: <% $.filename %>
+          overwrite: true
+          text: <% $.nodeInfo.join('\r\n') %>
+      publish:
+        lsoInfo: 'Step 5 successfully done | File written to file-service'
+        workflowOutput: '<% $.foldername %>/<% $.filename %>'
+      publish-on-error:
+        lsoStageError: <% task().result %>
+        lsoInfo: "Write audit result to file-service failed."
+      on-success:
+        - step6:      <% ($.number < $.passRatio)  or      $.skipRatioCheck %>
+        - ratioError: <% ($.number >= $.passRatio) and not $.skipRatioCheck  %>
+
+    step6:
+      action: std.sleep
+      input:
+        seconds: <% $.delay %>
+      publish:
+        lsoInfo: 'Step 6 successfully done'
+      on-success:
+        - step7:     <% ($.neId != $.failOnNeId) or      $.skipNodeCheck %>
+        - nodeError: <% ($.neId = $.failOnNeId)  and not $.skipNodeCheck %>
+
+    step7:
+      join: 1
+      action: std.noop
+      publish:
+        lsoInfo: 'Final step successfully done'
+
+    nodeError:
+      action: std.fail
+      publish-on-error:
+        lsoInfo: 'Operation failed for the specific NE'
+
+    ratioError:
+      action: std.fail
+      publish-on-error:
+        lsoInfo: 'Operation randomly failed because of specified failure ratio'
+
+...
