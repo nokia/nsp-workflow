@@ -1,0 +1,136 @@
+---
+version: '2.0'
+
+lso-multiphase-reporting-demo:
+  type: direct
+
+  tags:
+    - LSO
+    - device operations demo
+
+  input:
+    - passRatio: 100
+    - failOnNeId: 0.0.0.0
+
+  vars:
+    lsoInfo: "Failed"
+    lsoStageError: "unknown"
+
+  output:
+    lsoInfo: <% $.workflowOutput %>
+
+  output-on-error:
+    lsoInfo: <% $.lsoInfo %>
+    lsoStageError: <% $.lsoStageError %>
+
+
+  tasks:  
+    lsoStageMapping:
+      action: std.noop
+      publish:
+        foldername: "/deviceOperations/multiStepDemo"
+        filename: report_<% get_local_time("%Y-%m-%d_%H%M%S") %>.html
+
+        lsoWorkflowStageMapping:
+          lso-multiphase-reporting-demo:
+            - getDeviceInfo
+            - renderReport
+            - writeReport
+      on-success:
+        - getDeviceInfo
+
+    getDeviceInfo:
+      action: nsp.https
+      input:
+        url: "https://network-supervision/NetworkSupervision/rest/api/v1/networkElements/"
+      publish:
+        nodes: <% task().result.content.response.data %>
+      on-success:
+        - renderReport
+
+    renderReport:
+      action: std.noop
+      publish:
+        html: |
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                table {font-family: NokiaPure, sans-serif;border-collapse: collapse;width: 100%;}
+                td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}
+                tr:nth-child(even) {background-color: #dddddd;}
+                lime {margin-left: 19px;height: 12px;width: 12px;background-color: lime;border-radius: 50%;display: inline-block;}
+                red {margin-left: 19px;height: 12px;width: 12px;background-color: red;border-radius: 50%;display: inline-block;}
+              </style>
+            </head>
+            <body>
+              <span style="font-size: 1.5em; font-weight: 600; margin:10px; font-family: NokiaPure, sans-serif;">NE Report</span>
+              <div style="padding-right: 10px;">
+                <table>
+                  <tr>
+                    <th>NE Name</th>
+                    <th>Product Type</th>
+                    <th>SW Version</th>
+                    <th>IP Address</th>
+                    <th>Managed by</th>
+                    <th>NE Id</th>
+                  </tr>
+                  {% for item in _.nodes %}<tr>
+                    <td>{{ item.neName }}</td>
+                    <td>{{ item.type }}</td>
+                    <td>{{ item.version }}</td>
+                    <td>{{ item.ipAddress }}</td>
+                    <td>{{ item.sourceType }}</td>
+                    <td>{{ item.neId }}</td>
+                  </tr>{% endfor %}
+                </table>
+            </body>
+          </html>
+      on-success:
+          - folderExists
+
+    folderExists:
+      action: nsp.https
+      input:
+        method: GET
+        url: "https://file-service/nsp-file-service-app/rest/api/v1/directory?dirName=<% $.foldername %>"
+      publish:
+        lsoInfo: 'Folder exists'
+      publish-on-error:
+        lsoInfo: 'Folder does not exists'
+      on-success:
+        - writeReport        
+      on-error:
+        - createFolder
+
+    createFolder:
+      action: nsp.https
+      input:
+        url: "https://file-service/nsp-file-service-app/rest/api/v1/directory?dirName=<% $.foldername %>"
+        method: POST
+      publish:
+        lsoInfo: 'Folder created'
+      publish-on-error:
+        lsoStageError: <% task().result %>
+        lsoInfo: "Create output directory on file-service failed."  
+      on-success:
+        - writeReport
+        
+    writeReport:
+      action: nsp.https
+      input:
+        method: POST
+        url: https://file-service/nsp-file-service-app/rest/api/v1/file/uploadTextToFile
+        body:
+          dirName: <% $.foldername %>
+          fileName: <% $.filename %>
+          overwrite: true
+          text: <% $.html %>
+      publish:
+        lsoInfo: 'File written to file-service'
+        workflowOutput: '<% $.foldername %>/<% $.filename %>'
+      publish-on-error:
+        lsoStageError: <% task().result %>
+        lsoInfo: "Write audit result to file-service failed."
+
+...

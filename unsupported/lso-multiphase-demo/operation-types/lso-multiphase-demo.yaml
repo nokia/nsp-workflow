@@ -1,0 +1,67 @@
+phases:
+  - phase: 'Initial-Phase'
+    description: 'Initial for upgrade'
+    workflow_name: lso-multiphase-reporting-demo
+    workflow_inputs:
+
+  - phase: 'Pre-Check'
+    description: 'running the pre-check'
+    concurrency_count: 5
+    phase_timeout: 120 
+    ne_families:
+      - family_type: 7750 SR
+        ne_versions:
+          - version: all
+            workflow_name: lso-multiphase-execution-demo
+            workflow_inputs:
+              delay: 3
+              skipRatioCheck: false
+
+  - phase: 'Execute'
+    description: 'execute migration'
+    rollback_allowed: true
+    concurrency_count: 3
+    phase_timeout: 120
+    ne_families:
+      - family_type: 7750 SR
+        ne_versions: 
+          - version: all
+            workflow_name: lso-multiphase-execution-demo
+            workflow_inputs:
+              delay: 10
+              skipNodeCheck: false
+
+            rollback_workflow_name: lso-multiphase-rollback-demo
+            rollback_workflow_inputs:
+              passRatio: 75
+
+  - phase: 'Post-Check'
+    description: 'running the post-checks'
+    compare_with_phase: "Pre-Check"
+    rollback_allowed: true
+    concurrency_count: 10
+    phase_timeout: 120
+    ne_families:
+      - family_type: 7750 SR
+        ne_versions: 
+          - version: all
+            workflow_name: lso-multiphase-execution-demo
+            workflow_inputs:
+              delay: 3
+              skipRatioCheck: false
+
+            rollback_workflow_name: lso-multiphase-rollback-demo
+            rollback_workflow_inputs:
+              passRatio: 75
+
+  - phase: 'Clean-up'
+    description: 'operation cleanup'
+    concurrency_count: 10
+    phase_timeout: 120
+    ne_families:
+      - family_type: 7750 SR
+        ne_versions: 
+          - version: all
+            workflow_name: lso-multiphase-execution-demo
+            workflow_inputs:
+              delay: 1

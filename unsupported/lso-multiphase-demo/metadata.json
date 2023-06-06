@@ -1,0 +1,105 @@
+{
+    "meta-data-header": {
+        "version": "1.0.0",
+        "buildNumber": "1",
+        "formatVersion": "1.0",
+        "createdBy": "Sven Wisotzky",
+        "creationDate": "Tue, 6 Jun 2023 18:17:16 UTC",
+        "title": "Operation Manager LSO Multi-Phase Demo",
+        "description": "NSP Operations Manager Demo with multiple phase and rollback"
+    },
+    "artifact-meta-data": [
+        {
+            "name": "lso-multiphase-demo",
+            "version": "1.0.0",
+            "targetApplication": "lsom-server-app",
+            "applicationCompatibility": "23.4+",
+            "artifact-content": [
+                {
+                    "fileName": "lso-multiphase-demo.yaml",
+                    "path": "operation-types",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "lso-multiphase-demo.yang",
+                    "path": "operation-types",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "operation_types.json",
+                    "path": "operation-types",
+                    "type": "application/octet-stream"
+                }
+            ]
+        },
+        {
+            "name": "lso-multiphase-execution-demo",
+            "version": "1.0.0",
+            "targetApplication": "workflow-manager",
+            "applicationCompatibility": "23.4+",
+            "artifact-content": [
+                {
+                    "fileName": "lso-multiphase-execution-demo.yaml",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "lso-multiphase-execution-demo.json",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "README.md",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                }
+            ]
+        },
+        {
+            "name": "lso-multiphase-reporting-demo",
+            "version": "1.0.0",
+            "targetApplication": "workflow-manager",
+            "applicationCompatibility": "23.4+",
+            "artifact-content": [
+                {
+                    "fileName": "lso-multiphase-reporting-demo.yaml",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "lso-multiphase-reporting-demo.json",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "README.md",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                }
+            ]
+        },
+        {
+            "name": "lso-multiphase-rollback-demo",
+            "version": "1.0.0",
+            "targetApplication": "workflow-manager",
+            "applicationCompatibility": "23.4+",
+            "artifact-content": [
+                {
+                    "fileName": "lso-multiphase-rollback-demo.yaml",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "lso-multiphase-rollback-demo.json",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                },
+                {
+                    "fileName": "README.md",
+                    "path": "workflows",
+                    "type": "application/octet-stream"
+                }
+            ]
+        }
+    ]
+}

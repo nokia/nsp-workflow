@@ -1,0 +1,84 @@
+{
+    "type": "object",
+    "properties": [
+      {
+        "name": "neId",
+        "title": "NE ID",
+        "description": "description for neId",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "string",
+        "component": {
+          "input": "autoComplete"
+        },
+        "suggest": {
+          "action": "nspWebUI.neList",
+          "name": [
+            "neId"
+          ]
+        }
+      },
+      {
+        "name": "delay",
+        "title": "DELAY",
+        "description": "description for delay",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "number",
+        "default": 3
+      },
+      {
+        "name": "passRatio",
+        "title": "PASS RATIO",
+        "description": "description for passRatio",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "number",
+        "default": 100
+      },
+      {
+        "name": "failOnNeId",
+        "title": "FAIL ON NE ID",
+        "description": "description for failOnNeId",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "string",
+        "default": "0.0.0.0",
+        "validations": {
+          "patterns": [
+            "^(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))$"
+          ]
+        }
+      },
+      {
+        "name": "skipNodeCheck",
+        "title": "SKIP NODE CHECK",
+        "description": "description for skipNodeCheck",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "name": "skipRatioCheck",
+        "title": "SKIP RATIO CHECK",
+        "description": "description for skipRatioCheck",
+        "columnSpan": 4,
+        "newRow": true,
+        "readOnly": false,
+        "required": false,
+        "type": "boolean",
+        "default": true
+      }
+    ]
+  }
