@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "properties": [
+    {
+      "name": "neId",
+      "description": "Node to add SSH user.",
+      "title": "NE Id",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string"
+    },
+    {
+      "name": "sshUsername",
+      "description": "SSH username being used",
+      "title": "SSH username",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string"
+    }
+  ]
+}

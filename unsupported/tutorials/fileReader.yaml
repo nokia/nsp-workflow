@@ -1,0 +1,93 @@
+---
+version: '2.0'
+
+fileReader:
+  type: direct
+
+  description: Demo workflow for reading files
+
+  tags:
+    - WFM Tutorial
+    - NSP19.11
+
+  workflow_meta:
+    title:   Tutorial for file.read action (various input formats)
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: WFM Tutorials
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/tutorials
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.11']
+
+  tasks:
+    readXML:
+      action: file.read
+      input:
+        filename: /tmp/demo.xml
+      on-complete:
+        - readXML_raw
+
+    readXML_raw:
+      action: file.read
+      input:
+        filename: /tmp/demo.xml
+        options: raw
+      on-complete:
+        - readXML_skipNS
+
+    readXML_skipNS:
+      action: file.read
+      input:
+        filename: /tmp/demo.xml
+        options: skipNS
+      on-complete:
+        - readTXT
+
+    readTXT:
+      action: file.read
+      input:
+        filename: /tmp/demo.txt
+      on-complete:
+        - readTXT_raw
+
+    readTXT_raw:
+      action: file.read
+      input:
+        filename: /tmp/demo.txt
+        options: raw
+      on-complete:
+        - readCSV
+
+    readCSV:
+      action: file.read
+      input:
+        filename: /tmp/demo.csv
+      on-complete:
+        - readJSON
+
+    readJSON:
+      action: file.read
+      input:
+        filename: /tmp/demo.json
+      on-complete:
+        - readYAML
+
+    readYAML:
+      action: file.read
+      input:
+        filename: /tmp/demo.yaml
+      on-complete:
+        - readCFG
+
+    readCFG:
+      action: file.read
+      input:
+        filename: /tmp/demo.cfg
+
+...

@@ -1,0 +1,40 @@
+version: '2.0'
+
+demo.nsp.textFSM:
+  type: direct
+  
+  input:
+    - mgmtIP
+    - username: admin
+    - password: admin
+  
+  tasks:
+    task1:
+      action: nsp.sr_cli
+      input:
+        host: <% $.mgmtIP %>
+        username: <% $.username %>
+        password: <% $.password %>
+        prompt: '#'
+        cmd:
+          - /!classic-cli
+          - environment no more
+          - file dir
+      publish:
+        response: <% task().result["cmd3-file dir"].join('\n') %>
+      on-success:
+        - task2
+
+    task2:
+      action: nsp.textFSM
+      input:
+        response: <% $.response %>
+        template: |
+          Value Key,Required NAME (\S+)
+          Value SIZE (\d+)
+          Value TIMEDATE (\S+\s+\S+)
+          
+          Start
+            ^${TIMEDATE}\s+${SIZE}\s+${NAME}? -> Record
+      publish:
+        extractedData: <% task().result.data %>

@@ -1,0 +1,74 @@
+version: '2.0'
+
+7x50_day0_mdm:
+  description: Commission 7x50 (onboarding day 0)
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Commissioning
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - mgmtIP
+    - systemIP
+    - neName
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    configure_node_classic:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!classic-cli
+          - configure system name "<% $.neName %>"
+          - configure router interface "system" address <% $.systemIP %>/32
+          - configure system security ssh preserve-key
+          - configure system snmp no shutdown
+          - configure system snmp packet-size 9216
+          - configure system security snmp community private rwa version both
+          - configure system netconf no shutdown
+          - configure system netconf auto-config-save
+          - configure system security user "admin" access console netconf
+          - configure system security profile "administrative" netconf base-op-authorization lock
+          - configure system management-interface configuration-mode model-driven
+      publish:
+        status: <% task().result %>
+      on-success:
+        - configure_node_md
+
+    configure_node_md:
+      wait-before: 1
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!md-cli
+          - configure private
+          - system management-interface yang-modules base-r13-modules false
+          - system management-interface yang-modules nokia-modules false
+          - system management-interface yang-modules nokia-combined-modules true
+          - system management-interface yang-modules openconfig-modules true
+          - system login-control ssh inbound-max-sessions 20
+          - system security aaa local-profiles profile "administrative" combined-max-sessions 20
+          - system security aaa local-profiles profile "administrative" ssh-max-sessions 20
+          - commit
+...

@@ -1,0 +1,136 @@
+version: '2.0'
+
+7x50_PCAP_MDM:
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP19.11
+
+  input:
+    - neId
+    - port
+    - duration
+
+  output:
+    result: |
+      <!doctype html>
+      ```
+      <% $.pdump.join('\n') %>
+      ```
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    get_mgmtIP:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+      publish:
+        mgmtIP: <% task().result.content.response.data.first().ipAddress %>
+        neName: <% task().result.content.response.data.first().neName %>
+      on-success:
+        - setup_mirror
+
+    setup_mirror:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!md-cli
+          - edit-config private
+          - configure mirror mirror-dest "wfm"
+          - admin-state enable
+          - type ether
+          - service-id 1000
+          - pcap "local" file-url "ftp://admin:admin@127.0.0.1/cf3://sample.pcap"
+          - exit all
+          - configure mirror mirror-source "wfm"
+          - admin-state enable
+          - port <% $.port %>
+          - ingress true
+          - egress true
+          - exit all
+          - commit
+          - quit-config
+        closeSession: false
+      publish:
+        nodeTime: <% task().result.responses[2] %>
+        readResult: <% task().result.responses[3].split('\r\n') %>
+        sessionId: <% task().result.sessionId %>
+      on-success:
+        - start_capture
+
+    start_capture:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!classic-cli
+          - debug pcap "local" capture start
+        sessionId: <% $.sessionId %>
+        closeSession: false
+      on-success:
+        - stop_capture
+
+    stop_capture:
+      wait-before: <% $.duration %>
+      wait-after: 2
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!classic-cli
+          - debug pcap "local" capture stop
+        sessionId: <% $.sessionId %>
+        closeSession: false
+      on-success:
+        - get_pcap
+    
+    get_pcap:
+      action: nsp.shell
+      input:
+        command: 'curl -k --user admin:admin sftp://<% $.mgmtIP %>/cf3://sample.pcap -o /tmp/sample.pcap'
+      on-success:
+        - send_email
+    
+    send_email:
+      action: std.email
+      input:
+        from_addr: <% env().mailFrom %>
+        to_addrs: [<% env().mailToList %>]
+        smtp_server: <% env().mailServer %>
+        subject: 'Packet capture is available'
+        html_body: Capture available from <% $.neName %> port <% $.port %>
+        attachments: ["/tmp/sample.pcap"]
+      on-success:
+        - decode_pcap
+        
+    decode_pcap:
+      action: nsp.shell
+      input:
+        command: 'tcpdump -v -r /tmp/sample.pcap'
+      publish:
+        pdump: <% task().result.response %>
+      on-success:
+        - cleanup
+    
+    cleanup:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!md-cli
+          - edit-config private
+          - configure mirror delete mirror-dest "wfm"
+          - configure mirror delete mirror-source "wfm"
+          - commit
+          - quit-config
+          - /!classic-cli
+          - file delete cf3://sample.pcap force
+        sessionId: <% $.sessionId %>
+        closeSession: true
+          
+...

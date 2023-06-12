@@ -1,0 +1,155 @@
+version: '2.0'
+
+7x50_TSDUMP_MDM:
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP19.11
+
+  input:
+    - neId
+
+  output:
+    result: success
+
+  output-on-error:
+    result: failed
+
+  vars:
+    timestamp: <% get_local_time() %>
+    
+  tasks:
+    get_mgmtIP:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+      publish:
+        mgmtIP: <% task().result.content.response.data.first().ipAddress %>
+        neName: <% task().result.content.response.data.first().neName %>
+      on-success:
+        - cliConnect
+    
+    cliConnect:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        closeSession: false
+        cmds:
+          - /!classic-cli
+          - environment no more
+      publish:
+        sessionId: <% task().result.sessionId %>
+      on-success:
+        - cliChecks
+
+    cliChecks:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        sessionId: <% $.sessionId %>
+        closeSession: false
+        cmds:
+          - show system information          
+          - tools dump system-resources
+          - show service service-using
+          - show service sap-using
+          - show port
+          - show port description
+          - show port detail
+      publish:
+        clidump: <% task().result.responses %>
+      on-success:
+        - fileWriter
+
+    fileWriter:
+      action: file.write
+      input:
+        folder: /tmp
+        filename: <% $.neName %>_<% $.timestamp %>.txt
+        data: <% $.clidump.join('\n') %>
+      on-success:
+        - captureTS1
+
+    captureTS1:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        sessionId: <% $.sessionId %>
+        closeSession: false
+        cmds:
+          - /!classic-cli
+          - admin tech-support cf3:/<% $.neName %>_<% $.timestamp %>_A.tsdump
+      on-success:
+        - getTS1
+
+    getTS1:
+      action: nsp.shell
+      input:
+        command: 'curl -k --user admin:admin sftp://<% $.mgmtIP %>/cf3:/<% $.neName %>_<% $.timestamp %>_A.tsdump -o /tmp/<% $.neName %>_<% $.timestamp %>_A.tsdump'
+      on-success:
+        - captureTS2
+
+    captureTS2:
+      wait-before: 60
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        sessionId: <% $.sessionId %>
+        closeSession: false
+        cmds:
+          - admin tech-support cf3:/<% $.neName %>_<% $.timestamp %>_B.tsdump
+      on-success:
+        - getTS2
+
+    getTS2:
+      action: nsp.shell
+      input:
+        command: 'curl -k --user admin:admin sftp://<% $.mgmtIP %>/cf3:/<% $.neName %>_<% $.timestamp %>_B.tsdump -o /tmp/<% $.neName %>_<% $.timestamp %>_B.tsdump'
+      on-success:
+        - tsdump_zip
+
+    tsdump_zip:
+      action: nsp.shell
+      input:
+        command: 'zip /tmp/tsdump.zip /tmp/*.tsdump'
+      publish:
+        pdump: <% task().result.response %>
+      on-success:
+        - send_email
+
+    send_email:
+      action: std.email
+      input:
+        from_addr: <% env().mailFrom %>
+        to_addrs: [<% env().mailToList %>]
+        smtp_server: <% env().mailServer %>
+        subject: 'Tech-Support is available'
+        html_body: TSdump available from <% $.neName %>
+        attachments:
+          - /tmp/tsdump.zip
+          - /tmp/<% $.neName %>_<% $.timestamp %>.txt
+      on-success:
+        - remove_files
+
+    remove_files:
+      action: file.remove
+      input:
+        folder: /tmp
+        filenames:
+          - /tmp/<% $.neName %>_<% $.timestamp %>_A.tsdump
+          - /tmp/<% $.neName %>_<% $.timestamp %>_B.tsdump
+      on-success:
+        - cleanup
+     
+    cleanup:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        sessionId: <% $.sessionId %>
+        cmds:
+          - file delete cf3:/<% $.neName %>_<% $.timestamp %>_A.tsdump force
+          - file delete cf3:/<% $.neName %>_<% $.timestamp %>_B.tsdump force
+        closeSession: true
+       
+...

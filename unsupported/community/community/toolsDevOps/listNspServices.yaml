@@ -1,0 +1,31 @@
+---
+version: '2.0'
+
+listNspServices:
+  description: list NSP services
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.2.2'
+    license: BSD-3
+    package: DevOps
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  output:
+    services: <% $.services %>
+
+  tasks:
+    getServices:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("location") %>/v1/location/services
+      publish:
+        services: '<% task().result.content.response.data.services.serviceName %>'
+...

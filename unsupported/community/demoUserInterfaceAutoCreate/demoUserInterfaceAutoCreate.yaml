@@ -1,0 +1,29 @@
+version: '2.0'
+
+demoUserInterfaceAutoCreate:
+  type: direct
+
+  input:
+   - empty
+   - zeroLen: ""
+   - aNumber: 3
+   - aFloat: 3.3
+   - aPassword: my secret
+   - anAuthorizationField: blabla
+   - aBoolean: true
+   - aString: some text
+   - ipAddress: 192.168.0.1
+   - macAddress: '00:00:01:00:2a:00'
+   - aSubnet: 192.168.0.1/32
+   - aList: []
+   - anEnum: ['Value1', 'Value2']
+   - neId
+   - neName
+   - mgmtIP
+   - nodes
+
+
+
+  tasks:
+    task1:
+      action: std.noop

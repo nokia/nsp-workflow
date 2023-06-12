@@ -1,0 +1,47 @@
+---
+version: '2.0'
+
+ping:
+  description: Run ICMP ping
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: OAM
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - host: localhost
+    - duration: 4
+
+  output:
+    status: success
+    delay: <% $.result.RTT %>
+    loss: <% $.result.loss %>
+
+  output-on-error:
+    status: failed
+    reason: <% $.result.reason %>
+    result:
+
+  tasks:
+    pingTest:
+      action: nsp.ping
+      input:
+        host: <% $.host %>
+        duration: <% $.duration %>
+
+      publish:
+        result: '<% task().result %>'
+
+      publish-on-error:
+        result: '<% task().result %>'
+...

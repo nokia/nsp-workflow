@@ -1,0 +1,34 @@
+version: '2.0'
+dryRunForceCompare:
+  description: dryRun force compare
+  type: direct
+
+  vars:
+    dryRun: <% options().dryRun %>
+    force: <% options().force %>
+    compare: <% options().compare %>
+
+  tags:
+    - sample workflow
+
+  input:
+    - some
+    - user
+    - provided
+    - input
+
+  output:
+    dryRun: <% $.dryRun %>
+    force: <% $.force %>
+    compare: <% $.compare %>
+
+  tasks:
+    doNothing:
+      action: std.noop
+      publish:
+        published: something
+      on-success:
+        - finishOff
+       
+    finishOff:
+      action: std.noop

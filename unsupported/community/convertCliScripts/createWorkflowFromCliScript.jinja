@@ -1,0 +1,36 @@
+name: createWorkflowFromCliScript
+tags:
+  - WFM Demo
+  - NSP20.6
+template: |
+  version: '2.0'
+
+  {{ targetName }}:
+    type: direct
+    
+    input:
+      - neId
+      {% for variable, default in template.vars.items() %}- {{ variable }}{% if default %}: {{ default }}{% endif %}
+      {% endfor %}
+      
+    output:
+      result: |
+        <!doctype html>
+        ```
+        <% $.responses.join('\n') %>
+        ```
+
+    vars:
+      cliTemplate: <% fetch_jinja('{{ targetName }}') %>
+
+    tags:
+      - autocreated
+
+    tasks:
+      task1:
+        action: nsp.mdm_cli
+        input:
+          neId: <% $.neId %>
+          cmds: <% resolve_jinja($.cliTemplate, $).split('\n') %>
+        publish:
+          responses: <% task().result.responses %>

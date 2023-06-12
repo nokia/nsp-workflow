@@ -1,0 +1,39 @@
+{
+    "type": "object",
+    "properties": [
+      {
+        "description": "IP address or hostname",
+        "name": "host",
+        "title": "Host",
+        "readOnly": false,
+        "columnSpan": 4,
+        "required": true,
+        "nodetype": "property",
+        "type": "string",
+        "default": "localhost",
+        "component": {
+          "input": "autoComplete"
+        },
+        "suggest": {
+          "action": "nspWebUI.neList",
+          "name": [
+            "mgmtIP"
+          ]
+        }
+      },
+      {
+        "description": "Test duration in seconds",
+        "name": "duration",
+        "title": "Duration",
+        "readOnly": false,
+        "columnSpan": 4,
+        "required": true,
+        "nodetype": "property",
+        "type": "number",
+        "baseType": "number",
+        "enum": null,
+        "group": "auto",
+        "default": 5
+      }
+    ]
+  }

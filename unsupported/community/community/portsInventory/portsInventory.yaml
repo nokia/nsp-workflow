@@ -1,0 +1,34 @@
+---
+version: '2.0'
+
+portsInventory:
+  description: Port inventory
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: Inventory
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  output:
+    result: <% $.html %>
+
+  vars:
+    template: <% fetch_jinja('portsInventory') %>
+
+  tasks:
+    getPortsInfo:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("ports") %>/v1/ports
+      publish:
+        html: <% resolve_jinja($.template, task().result.content.response) %>
+...

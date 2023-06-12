@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": [
+    {
+      "name": "workflow",
+      "description": "workflow to call. Must be either addUser or delUser.",
+      "title": "Workflow",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "enum": [
+        "addUser",
+        "delUser"
+      ],
+      "type": "enum",
+      "baseType": "enumeration"    },
+    {
+      "name": "sshUsername",
+      "description": "SSH username being used",
+      "title": "SSH username",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string"
+    },
+    {
+      "name": "concurrency",
+      "description": "Concurrency value to be used",
+      "title": "Concurrency",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "number",
+      "baseType": "number"
+    }
+  ]
+}

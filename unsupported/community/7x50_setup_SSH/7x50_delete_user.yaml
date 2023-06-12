@@ -1,0 +1,103 @@
+version: '2.0'
+
+7x50_delete_user:
+  type: direct
+
+  description: Deletes a local CLI user to a Nokia 7x50 router.
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Delete a CLI user from a Nokia 7x50 router
+    author:  NOKIA DEMO
+    signature: 530c772d52177f0443b27c67320d1fa66a62c7b7541613f9f8bb0f54f50e557b139505ba1dda42464010b5b9ed559a5471aaa3e5ea452b36d2058df18179854d7bdb784310b7f4b818fe3f8a4f352469a92e131f2deb31d30b54778c574b41a7ba2795fef56f803e25c3dd686cbb375ce8fd4aa668cb76c4ceef99eb83c2297e0fa0e2a2b4808efbfa306be62fe10eabfd623c00c9f40fa5b4113e6910b5404afcb3219f9b435e74e70a896c4e66bd1fe173035ce8127738569374269cf94e0976a263cb9cecd8f470e228a229c766d90f0ec80547fafb2a2bca843e036493e3efa4dac5afb5a31928b095a4a672554657afeb97d2708edfac70c101c850c403
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_SSH
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - neId: '1.1.1.1'
+    - sshUsername: nspuser
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        checkHost
+
+    checkHost:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host:     <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - delSSHUserMDM: <% $.hosttype = 'mdm' %>
+        - delSSHUserNFMP: <% $.hosttype = 'nfmp' %>
+
+    delSSHUserMDM:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!md-cli
+          - edit-config global
+          - configure system security user-params local-user delete user <% $.sshUsername %>
+          - commit
+          - quit-config
+      publish:
+        status: <% task().result %>
+
+    delSSHUserNFMP:
+      action: nsp.sr_cli
+      input:
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - configure system security no user <% $.sshUsername %>
+          - exit all
+      publish:
+        status: <% task().result %>
+
+...

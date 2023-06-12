@@ -1,0 +1,42 @@
+---
+version: '2.0'
+
+neBackupDisplay:
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Operations
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - backupFolder
+    - backupFilename
+
+  output:
+    result: |
+      <!doctype html>
+      ```
+      <% $.config %>
+      ```
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    fetchBackup:
+      action: file.read
+      input:
+        folder: /tmp/backup/<% $.backupFolder %>
+        filename: <% $.backupFilename %>
+      publish:
+        config: <% task().result.data %>
+...

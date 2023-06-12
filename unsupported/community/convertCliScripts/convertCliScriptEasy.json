@@ -1,0 +1,30 @@
+{
+    "type": "object",
+    "properties": [
+        {
+            "name": "cliScript",
+            "title": "CLI SCRIPT",
+            "description": "CLI Script definition copied from JavaUI",
+            "columnSpan": 4,
+            "newRow": true,
+            "readOnly": false,
+            "required": true,
+            "type": "string",
+            "wrap": "soft",
+            "component": {
+                "input": "textArea"
+            },
+            "default": "show port $port-id$(default 1/1/1)\nshow service service-using\nshow system information\n"
+        },
+        {
+            "name": "workflowName",
+            "title": "WORKFLOW NAME",
+            "description": "Name of the workflow to be created",
+            "columnSpan": 4,
+            "newRow": true,
+            "readOnly": false,
+            "required": true,
+            "type": "string"
+        }
+    ]
+}

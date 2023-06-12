@@ -1,0 +1,110 @@
+---
+version: '2.0'
+
+cleanupCFlashMDM_v4:
+  description: Deletion of old files from CF-card in the specified directory
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Operations
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - neId: 1.1.2.1
+    - dir: cf3:/act
+    - deleteAge: 3600
+    - dryRun: true
+
+  vars:
+    fileList: []
+    success: False
+
+  output:
+    files: <% $.fileList %>
+    success: True
+
+  output-on-error:
+    files: <% $.fileList %>
+    success: False
+
+  tasks:
+    getTimeAndFiles:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!classic-cli
+          - environment no more
+          - show time
+          - file dir <% $.dir %>
+        closeSession: false
+      publish:
+        nodeTime: <% task().result.responses[2] %>
+        readResult: <% task().result.responses[3].split('\r\n') %>
+        sessionId: <% task().result.sessionId %>
+      on-success:
+        - applyFilter
+
+    applyFilter:
+      action: std.javascript
+      input:
+        context: <% $ %>
+        script: |
+          var delAge = parseInt($.deleteAge);
+          var delTime = Date.parse($.nodeTime) - 1000*delAge;
+          var timeZone = $.nodeTime.split(/\s+/)[4];
+
+          var fileList = [];
+          $.readResult.forEach(function(line) {
+            var items = line.split(/\s+/);
+            if (items.length==4 && items[2]!=="<DIR>") {
+              var [hour, minute] = items[1].split(/:/);
+              if (minute.endsWith("p") && Number(hour)!==12) {
+                hour = Number(hour) + 12;
+              }
+              minute = minute.substring(0, minute.length-1);
+              var fileTime = new Date(items[0]+" "+hour+":"+minute+" "+timeZone);
+              if (Number(fileTime) < delTime) {
+                var fileFdn = $.dir + "/" + items[3];
+                fileList.push(fileFdn);
+              }
+            }
+          })
+          return fileList;
+      publish:
+        fileList: <% task().result %>
+        cmdList: <% task().result.selectMany("file delete "+$+" force") %>
+      on-success:
+        - deleteFiles: <% $.fileList and not $.dryRun %>
+        - closeSession: <% $.dryRun or not $.fileList %>
+      on-error:
+        - closeSession
+
+    deleteFiles:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds: <% $.cmdList %>
+        sessionId: <% $.sessionId %>
+        closeSession: true
+      publish:
+        cliResponse: <% task().result %>
+
+    closeSession:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - exit all
+        sessionId: <% $.sessionId %>
+        closeSession: true
+...

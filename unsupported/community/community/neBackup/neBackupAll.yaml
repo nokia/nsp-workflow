@@ -1,0 +1,43 @@
+---
+version: '2.0'
+
+neBackupAll:
+  description: NE backups of all MD managed SR OS nodes
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Operations
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getHosts:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=product='7750 SR'
+      publish:
+        neInventory: <% task().result.content.response.data %>
+      on-success:
+        - backupAll
+
+    backupAll:
+      with-items: host in <% $.neInventory.where($.sourceType=mdm) %>
+      concurrency: 5
+      workflow: backup
+      input:
+        neId: <% $.host.neId %>
+...

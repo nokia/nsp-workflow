@@ -1,0 +1,50 @@
+---
+version: '2.0'
+
+mdmClusterState:
+  description: Reports MDM cluster state
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: Reporting
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - sendEmail: false
+
+  output:
+    result: <% $.html %>
+
+  vars:
+    template: <% fetch_jinja('mdmClusterState') %>
+
+  tasks:
+    getClusterInfo:
+      action: nsp.https
+      input:
+        url: <% locate_nsp('restconf') %>/operations/nsp-ne-control:get-system-info
+        method: POST
+      publish:
+        html: <% resolve_jinja($.template, task().result.content["nsp-ne-control:output"]) %>
+      on-success:
+        - sendEmail: <% $.sendEmail %>
+
+    sendEmail:
+      action: std.email
+      input:
+        from_addr: <% env().mailFrom %>
+        to_addrs: [<% env().mailToList %>]
+        smtp_server: <% env().mailServer %>
+        subject: 'MDM Server Group Leadership Change Detected'
+        html_body: <% $.html %>
+
+...

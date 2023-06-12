@@ -1,0 +1,55 @@
+{
+    "type": "object",
+    "properties": [
+        {
+            "description": "Executions of what workflow to cleanup. Keep empty for all workflows.",
+            "name": "workFlowName",
+            "title": "Workflow name",
+            "readOnly": false,
+            "columnSpan": 4,
+            "defaultValue": "",
+            "required": false,
+            "nodetype": "property",
+            "type": "string",
+            "baseType": "string",
+            "component": {
+                "input": "autoComplete"
+            },
+            "suggest": {
+                "action": "nspWebUI.wfList",
+                "name": [
+                    "name"
+                ]
+            }
+        },
+        {
+            "description": "Limit cleanup on execution state. Keep empty for all executions states.",
+            "name": "workFlowState",
+            "title": "Workflow execution state",
+            "readOnly": false,
+            "columnSpan": 4,
+            "defaultValue": "ERROR",
+            "required": false,
+            "nodetype": "property",
+            "enum": [
+                "ERROR",
+                "SUCCESS",
+                ""
+            ],
+            "type": "enum",
+            "baseType": "enumeration"
+        },
+        {
+            "description": "Delete execution results based on age in seconds.",
+            "name": "deleteAge",
+            "title": "Older than (seconds)",
+            "readOnly": false,
+            "columnSpan": 4,
+            "defaultValue": 3600,
+            "required": false,
+            "nodetype": "property",
+            "type": "number",
+            "baseType": "number"
+        }
+    ]
+}

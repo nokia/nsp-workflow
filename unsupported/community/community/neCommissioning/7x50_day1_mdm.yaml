@@ -1,0 +1,75 @@
+version: '2.0'
+
+7x50_day1_mdm:
+  description: Provisioning 7x50 (day 1)
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Commissioning
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - neId
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    configure_node_md:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!md-cli
+          - configure private
+          - sfm 1 sfm-type m-sfm5-12
+          - card 1 card-type iom3-xp
+          - card 1 mda 1 mda-type m60-10/100eth-tx
+          - card 1 mda 2 mda-type m60-10/100eth-tx
+          - log file 10 compact-flash-location primary cf3
+          - log file 10 rollover 5
+          - log file 10 retention 36
+          - log accounting-policy 10 record complete-ethernet-port
+          - log accounting-policy 10 collection-interval 5
+          - log accounting-policy 10 default true
+          - log accounting-policy 10 include-system-info true
+          - log accounting-policy 10 destination file 10
+          - log accounting-policy 10 admin-state enable
+          - port 1/1/1 ethernet collect-stats true
+          - port 1/1/2 ethernet collect-stats true
+          - port 1/1/10 ethernet collect-stats true
+          - port 1/1/11 ethernet collect-stats true
+          - port 1/1/12 ethernet collect-stats true
+          - port 1/1/1 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/2 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/10 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/11 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/12 ethernet lldp dest-mac nearest-bridge receive true transmit true
+          - port 1/1/10 ethernet mode access
+          - port 1/1/11 ethernet mode access
+          - port 1/1/12 ethernet mode access
+          - port 1/1/10 ethernet encap-type dot1q
+          - port 1/1/11 ethernet encap-type dot1q
+          - port 1/1/12 ethernet encap-type dot1q
+          - port 1/1/1 admin-state enable
+          - port 1/1/2 admin-state enable
+          - port 1/1/10 admin-state enable
+          - port 1/1/11 admin-state enable
+          - port 1/1/12 admin-state enable
+          - commit
+          - exit all
+      publish:
+        status: <% task().result %>
+...

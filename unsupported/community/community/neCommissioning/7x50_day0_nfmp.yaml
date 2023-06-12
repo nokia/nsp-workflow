@@ -1,0 +1,52 @@
+version: '2.0'
+
+7x50_day0_nfmp:
+  description: Commission 7x50 (onboarding day 0)
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Commissioning
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - mgmtIP
+    - systemIP
+    - neName
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    configure_node_classic:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!classic-cli
+          - configure system name "<% $.neName %>"
+          - configure router interface "system" address <% $.systemIP %>/32
+          - configure system security ssh preserve-key
+          - configure system snmp no shutdown
+          - configure system snmp packet-size 9216
+          - configure system security snmp community private rwa version both
+          - configure system login-control ssh inbound-max-sessions 20
+          - configure system security profile "administrative" combined-max-sessions 20
+          - configure system security profile "administrative" ssh-max-sessions 20
+
+      publish:
+        status: <% task().result %>
+...

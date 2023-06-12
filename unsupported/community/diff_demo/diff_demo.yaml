@@ -1,0 +1,48 @@
+version: '2.0'
+
+diff_demo:  
+  type: direct
+  
+  input:
+    - context: True
+    - numlines: 5
+  
+  output:
+    response: <% $.output.html %>
+    
+  output-on-error:
+    response: <% $.output %>
+
+  
+  tasks:
+    task1:
+      action: nsp.diff
+      input:
+        mode: doc
+        fromlines:
+          - "Hamlet: Do you see yonder cloud that's almost in shape of a camel?"
+          - "Polonius: By the mass, and 'tis like a camel, indeed."
+          - "Hamlet: Methinks it is like a weasel."
+          - "Polonius: It is backed like a weasel."
+          - "Hamlet: Or like a whale?"
+          - "Polonius: Very like a whale.xyz"
+          - "-- Shakespeare"
+        tolines: |
+          Hamlet: Do you see the cloud over there that's almost the shape of a camel?
+          Polonius: By golly, it is like a camel, indeed.
+          Hamlet: I think it looks like a weasel.
+          Polonius: It is shaped like a weasel.
+          Hamlet: Or like a whale?
+          Polonius: It's totally like a whale.
+          -- Shakespeare
+        fromdesc: original
+        todesc: new version    
+        context: <% $.context %>
+        numlines: <% $.numlines %>
+        wrapsize: 60
+        tabsize: 4
+      publish:
+        output: <% task().result %>
+      publish-on-error:
+        output: <% task().result %>
+

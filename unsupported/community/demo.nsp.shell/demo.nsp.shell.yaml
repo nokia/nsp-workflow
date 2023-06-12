@@ -1,0 +1,24 @@
+version: '2.0'
+
+demo.nsp.shell:  
+  type: direct
+
+  tasks:
+    execOLD:
+      action: std.ssh
+      input:
+        host: localhost
+        username: root
+        password: NokNsp1!
+        cmd: |
+          whoami
+          ls -l
+      publish:
+        result1: <% task().result %>
+        
+    execNEW:
+      action: nsp.shell
+      input:
+        command: whoami;ls -l
+      publish:
+        result2: <% task().result %>

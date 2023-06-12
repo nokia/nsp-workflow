@@ -1,0 +1,51 @@
+version: '2.0'
+
+cleanup_CA:
+  type: direct
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Cleanup PKI/CA
+    author:  NOKIA DEMO
+    signature: 5d96d9e026ed8a33cc4453cd7eb4c94e0eba0736163e92c88f0285f2f013309c2b3df2dc6e40f99e5e200fe80941c2ad91cdbc1559c42f07c0508794717cb0f0fb1c353d46e962c7daaad28c1d61cd85c881431034ec4f35d3596ef599cd0c5d49000c4e25c13237d091e21f77ed2eb0c44639f21dde3aa897b6958e6804bb2f0f585ad08c33e84aee51148cff2c1a14a62b5fb95fa729470b38e0e2938b9007175438c1bf2ccfd6ccd85c3d841bc4f6caa8064e5e35d1ba4923ff7665111e432388965df75a06606ae465813a4b52fec8c6c02e1391f74ab99831035fd598b829bd2d5a39dfb17d3c18f69cb562f0bda208d9af178ff558c88206ab12d8b330
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_TLS
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        cleanup
+
+    cleanup:
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          /opt/nsp/os/jre/bin/keytool -delete -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pkiStorepass %>'
+          cd /opt/nsp/os/ssl/certs
+          rm -rf telemetry
+          rm /etc/pki/CA/index.txt
+          rm /etc/pki/CA/crlnumber
+...

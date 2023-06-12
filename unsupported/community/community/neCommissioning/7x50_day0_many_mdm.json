@@ -1,0 +1,40 @@
+{
+    "type": "object",
+    "properties": [
+        {
+            "description": "Planning data for Day0 operations",
+            "name": "planningData",
+            "type": "list",
+            "title": "NE List",
+            "columnSpan": 4,
+            "properties": [
+                {
+                    "name": "systemIP",
+                    "type": "string",
+                    "title": "NE Id",
+                    "default": "1.1.1.1"
+                },
+                {
+                    "name": "neName",
+                    "type": "string",
+                    "title": "Nodename"
+                },
+                {
+                    "name": "mgmtIP",
+                    "type": "string",
+                    "title": "Management IP",
+                    "default": "135.228.1.1"
+                }
+            ]
+        },
+        {
+            "description": "Avoid Operator Prompts",
+            "name": "force",
+            "title": "Force",
+            "columnSpan": 2,
+            "default": false,
+            "newRow": true,
+            "type": "boolean"
+        }
+    ]
+}

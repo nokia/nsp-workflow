@@ -1,0 +1,15 @@
+---
+version: '2.0'
+
+nsp.neListNFMP:
+  description: get list of NFMP-managed nodes
+  base: std.http
+  base-input:
+    url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=sourceType='nfmp'
+    method: GET
+    verify: False
+    headers:
+      Content-Type: application/json
+      Authorization: Bearer <% $.token_auth %>
+  input:
+   - token_auth

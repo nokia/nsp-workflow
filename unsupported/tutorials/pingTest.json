@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": [
+    {
+      "description": "IP address or hostname",
+      "name": "host",
+      "title": "Host",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "string",
+      "baseType": "string",
+      "enum": null,
+      "group": "auto",
+      "defaultValue": "localhost",
+      "component": {
+        "input": "autoComplete"
+      },
+      "suggest": {
+        "action": "nsp.neList",
+        "name": [
+          {
+            "host": "ipAddress"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Test duration in seconds",
+      "name": "duration",
+      "title": "Duration",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "nodetype": "property",
+      "type": "number",
+      "baseType": "number",
+      "enum": null,
+      "group": "auto",
+      "defaultValue": 30
+    }
+  ]
+}

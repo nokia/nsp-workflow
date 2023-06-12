@@ -1,0 +1,42 @@
+---
+name: reportingNodes
+tags:
+  - WFM Demo
+  - NSP20.6
+
+template: |
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <style>
+        table {font-family: NokiaPure, sans-serif;border-collapse: collapse;width: 100%;}
+        td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}
+        tr:nth-child(even) {background-color: #dddddd;}
+        lime {margin-left: 19px;height: 12px;width: 12px;background-color: lime;border-radius: 50%;display: inline-block;}
+        red {margin-left: 19px;height: 12px;width: 12px;background-color: red;border-radius: 50%;display: inline-block;}
+      </style>
+    </head>
+    <body>
+      <span style="font-size: 1.5em; font-weight: 600; margin:10px; font-family: NokiaPure, sans-serif;">Managed NE Report</span>
+      <div style="padding-right: 10px;">
+        <table>
+          <tr>
+            <th>NE Name</th>
+            <th>Product Type</th>
+            <th>SW Version</th>
+            <th>IP Address</th>
+            <th>Managed by</th>
+            <th>NE Id</th>
+          </tr>
+          {% for item in result %}<tr>
+            <td>{{ item.neName }}</td>
+            <td>{{ item.neType }}</td>
+            <td>{{ item.version }}</td>
+            <td>{{ item.mgmtIP }}</td>
+            <td>{{ item.sourceType }}</td>
+            <td>{{ item.neId }}</td>
+          </tr>{% endfor %}
+        </table>
+      </div>
+    </body>
+  </html>

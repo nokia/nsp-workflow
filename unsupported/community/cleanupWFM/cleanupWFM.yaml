@@ -1,0 +1,82 @@
+---
+version: '2.0'
+
+cleanupWFM:
+  description: Delete workflow execution results for house-keeping
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NSP Housekeeping
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - workFlowName:
+    - workFlowState:
+    - deleteAge:
+
+  vars:
+    wfmAPI: <% locate_nsp("Executions") %>
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getQueryFilter:
+      action: std.javascript
+      safe-rerun: true
+      input:
+        context: <% $ %>
+        script: |
+          var delTime = new Date()
+          if ($.deleteAge > 0) {
+            delTime = new Date(delTime - 1000*$.deleteAge);
+          }
+          var filter = "?created_at=lt:";
+          filter += delTime.getUTCFullYear() + "-" + (delTime.getUTCMonth()+1) + "-" + delTime.getUTCDate();
+          filter += "%20";
+          filter += delTime.getUTCHours() + ":" + delTime.getUTCMinutes() + ":" + delTime.getUTCSeconds();
+
+          if ($.workFlowName != null) {
+            filter = filter + "&workflow_name=" + $.workFlowName;
+          }
+          if ($.workFlowState != null) {
+            filter = filter + "&state=" + $.workFlowState;
+          }
+          return filter;
+      publish:
+          queryFilter: <% task().result %>
+      on-success:
+        - getFilteredRuns
+
+    getFilteredRuns:
+      action: nsp.https
+      safe-rerun: true
+      input:
+        url: <% $.wfmAPI %>/v1/execution<% $.queryFilter %>&limit=100
+      publish:
+        wfmResults:  <% task().result.content.response.data.id %>
+      on-success:
+       - deleteExecutions: <% $.wfmResults.len() > 0 %>
+
+    deleteExecutions:
+      with-items: id in <% $.wfmResults %>
+      action: nsp.https
+      input:
+        url: <% $.wfmAPI %>/v1/execution/<% $.id %>
+        method: DELETE
+      concurrency: 8
+      on-complete:
+        - getFilteredRuns
+...

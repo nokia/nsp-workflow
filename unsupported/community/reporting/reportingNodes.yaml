@@ -1,0 +1,55 @@
+---
+version: '2.0'
+
+reportingNodes:
+  description: Managed NE inventory report using HTML format
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: Reporting
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  output:
+    result: <% $.html %>
+
+  vars:
+    template: <% fetch_jinja('reportingNodes') %>
+    reportDir: <% folder_exists('/tmp/reports') %>
+    timestamp: <% get_local_time() %>
+
+  tasks:
+    getDeviceInfo:
+      action: nspWebUI.neList
+      input:
+        token_auth: <% env().token_auth %>
+      publish:
+        html: <% resolve_jinja($.template, task()) %>
+      on-success:
+        - dumpReport: <% $.reportDir %>
+        - createFolder: <% not $.reportDir %>
+
+    createFolder:
+      action: folder.create
+      input:
+        foldername: /tmp/reports
+        mode: recursive
+      on-success:
+        - dumpReport
+
+    dumpReport:
+      join: 1
+      action: file.write
+      input:
+        folder: /tmp/reports
+        filename: nodes_<% $.timestamp %>.html
+        data: <% $.html %>
+...

@@ -1,0 +1,78 @@
+{
+  "type": "object",
+  "properties": [
+    {
+      "name": "restApi",
+      "type": "propertyGroup",
+      "columnSpan": 5,
+      "title": "REST API TEST",
+      "newRow": true
+    },
+    {
+      "name": "save",
+      "type": "propertyGroup",
+      "columnSpan": 5,
+      "title": "Save REST API call as workflow",
+      "newRow": true
+    },
+    {
+      "description": "NSP API EndPoint",
+      "name": "svcEndPoint",
+      "title": "EndPoint",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "newRow": true,
+      "propertyGroup": "restApi",
+      "type": "string",
+      "enum": null,
+      "component": {
+        "input": "autoComplete"
+      },
+      "suggest": {
+        "action": "nspApiEndpointList",
+        "name": [
+          "endpoint"
+        ]
+      }
+    },
+    {
+      "description": "REST API Body",
+      "name": "body",
+      "title": "Message Body",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": false,
+      "newRow": true,
+      "propertyGroup": "restApi",
+      "type": "string",
+      "enum": null
+    },
+    {
+      "description": "Create new workflow",
+      "name": "createWorkflow",
+      "title": "Create Workflow",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": true,
+      "newRow": false,
+      "propertyGroup": "save",
+      "type": "boolean",
+      "enum": null,
+      "default": false
+    },
+    {
+      "description": "workflowName",
+      "name": "workflowName",
+      "title": "Workflow Name",
+      "readOnly": false,
+      "columnSpan": 4,
+      "required": false,
+      "newRow": true,
+      "propertyGroup": "save",
+      "type": "string",
+      "enum": null,
+      "default": "demo"
+    }
+  ]
+}

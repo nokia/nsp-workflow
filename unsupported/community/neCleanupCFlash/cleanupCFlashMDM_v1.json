@@ -1,0 +1,68 @@
+{
+    "type": "object",
+    "properties": [
+        {
+            "name": "neId",
+            "title": "NE ID",
+            "description": "NE ID",
+            "columnSpan": 4,
+            "newRow": true,
+            "readOnly": false,
+            "required": false,
+            "type": "string",
+            "component": {
+                "input": "autoComplete"
+            },
+            "suggest": {
+                "action": "nspWebUI.neList",
+                "name": [
+                    "neId"
+                ]
+            }
+        },
+        {
+            "name": "dir",
+            "title": "Directory",
+            "readOnly": false,
+            "columnSpan": 4,
+            "required": true,
+            "newRow": true,
+            "type": "string",
+            "enum": null,
+            "default": "cf3:/act"
+        },
+        {
+            "name": "deleteAge",
+            "title": "Age",
+            "readOnly": false,
+            "columnSpan": 4,
+            "required": true,
+            "newRow": true,
+            "type": "number",
+            "enum": null,
+            "default": 3600
+        },
+        {
+            "name": "concurrency",
+            "title": "Concurrency",
+            "readOnly": false,
+            "columnSpan": 4,
+            "required": true,
+            "newRow": true,
+            "type": "number",
+            "enum": null,
+            "default": 2
+        },
+        {
+            "name": "dryRun",
+            "title": "Dry-Run",
+            "readOnly": false,
+            "columnSpan": 4,
+            "required": true,
+            "newRow": true,
+            "type": "boolean",
+            "enum": null,
+            "default": true
+        }
+    ]
+}

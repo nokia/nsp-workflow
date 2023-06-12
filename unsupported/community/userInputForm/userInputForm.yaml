@@ -1,0 +1,40 @@
+version: '2.0'
+
+userInputForm:
+  description: this is a sample workflow
+  
+  type: direct
+  
+  tags:
+    - sample workflow
+
+  input:
+    - neId
+
+  tasks:
+    task1:
+      action: nsp.user_input
+      input:
+        title: Service Operator Confirmation
+        message: User John wants to update the following 10 (...) services
+        successAction: 'YES'
+        errorAction: 'NO'
+        inputForm:
+          type: object
+          properties:
+            - name: neId
+              title: NE ID
+              description: description for neId
+              columnSpan: 4
+              newRow: true
+              readOnly: false
+              required: false
+              type: string
+              component:
+                input: autoComplete
+              suggest:
+                action: nspWebUI.neList
+                name:
+                  - neId
+
+

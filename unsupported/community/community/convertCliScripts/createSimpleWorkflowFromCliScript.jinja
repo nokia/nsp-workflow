@@ -1,0 +1,35 @@
+name: createSimpleWorkflowFromCliScript
+tags:
+  - WFM Demo
+  - NSP20.6
+template: |
+  version: '2.0'
+
+  {{ workflowName }}:
+    type: direct
+    
+    input:
+      - neId
+      {% for variable, default in template.vars.items() %}- {{ variable }}{% if default %}: {{ default }}{% endif %}
+      {% endfor %}
+      
+    output:
+      result: |
+        <!doctype html>
+        ```
+        <% $.responses.join('\n') %>
+        ```
+
+    tags:
+      - autocreated
+
+    tasks:
+      task1:
+        action: nsp.mdm_cli
+        input:
+          neId: <% $.neId %>
+          cmds:
+            {% for line in template.j2.split('\n') %}- {{ line }}
+            {% endfor %}
+        publish:
+          responses: <% task().result.responses %>

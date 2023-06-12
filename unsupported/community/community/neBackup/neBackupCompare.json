@@ -1,0 +1,50 @@
+{
+    "type": "object",
+    "properties": [
+      {
+        "name": "backupFolder",
+        "title": "NE Id",
+        "readOnly": false,
+        "required": true,
+        "type": "string",
+        "component": {
+          "input": "autoComplete"
+        },
+        "suggest": {
+          "action": "neBackupFolderList",
+          "name": [
+            "backupFolder"
+          ]
+        }
+      },
+      {
+        "name": "backupFilenames",
+        "title": "Backups",
+        "readOnly": false,
+        "required": true,
+        "newRow": true,
+        "columnSpan": 4,
+        "type": "list",
+        "strict": true,
+        "validations": {
+          "length": [
+            {
+              "min": 2,
+              "max": 2
+            }
+          ]
+        },
+        "component": {
+          "input": "picker"
+        },
+        "suggest": {
+          "action": "neBackupFileList"
+        },
+        "properties": [
+          {
+            "name": "backupFilename"
+          }
+        ]
+      }
+    ]
+  }

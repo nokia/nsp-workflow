@@ -1,0 +1,1 @@
+{"type":"object","properties":[{"name":"searchPattern","title":"SEARCH PATTERN","description":"description for searchPattern","columnSpan":4,"newRow":true,"readOnly":false,"required":false,"type":"string","default":"","component":{"input":"autoComplete"},"suggest":{"action":"nspWfmActionList","name":["name"]}}]}

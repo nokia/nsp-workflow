@@ -1,0 +1,78 @@
+---
+version: '2.0'
+
+csvTest:
+  type: direct
+
+  description: Demo workflow for read/write CSV
+
+  tags:
+    - WFM Tutorial
+    - NSP19.11
+
+  workflow_meta:
+    title:   Tutorial for csv_dump and csv_parse
+    author:  NOKIA DEMO
+    version: '1.0.0'
+    license: BSD-3
+    package: WFM Tutorials
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/tutorials
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.11']
+
+  vars:
+    jukebox: |
+      Artist;Album;Genre;Year
+      Foo Fighters;Wasting Light;Alternative;2011
+      Foo Fighters;One by One;Alternative;2011
+      Nick Cave and the Bad Seeds;Tender Prey;Alternative;1988
+    playlist:
+      - Artist: Smashing Pumpkins
+        Title: Quiet
+        Details:
+          Album: Siamese Dream
+          Genre: Grunge
+          Year: 1993
+          Classification:
+            Fred: 5
+      - Artist: Madness
+        Title: One Step Beyond
+        Details:
+          Album: One Step Beyond
+          Genre: Ska
+          Year: 2014
+          Duration: 2:18min
+          Classification:
+            Fred: 3
+            Max: 3
+      - Artist: Oasis
+        Title: Hey Now!
+        Details:
+          Album: What's the Story Morning Glory?
+          Genre: Alternative & Indie
+          Duration: 5:41min
+          Classification:
+            Fred: 3
+            Max: 5
+            Emma: 2
+
+  tasks:
+    csvTest:
+      action: std.echo
+      input:
+        output:
+          jukebox_csv: <% $.jukebox %>
+          jukebox_obj: <% csv_parse($.jukebox) %>
+          playlist_obj: <% $.playlist %>
+          playlist_csv1: <% csv_dump($.playlist, 1) %>
+          playlist_csv2: <% csv_dump($.playlist, 2) %>
+          playlist_csv3: <% csv_dump($.playlist, 3) %>
+      publish:
+        result: <% task().result %>
+
+...

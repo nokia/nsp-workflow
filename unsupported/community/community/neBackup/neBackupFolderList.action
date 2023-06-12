@@ -1,0 +1,14 @@
+---
+version: '2.0'
+
+neBackupFolderList:
+  base: folder.list 
+  base-input:
+    foldername: /tmp/backup
+    filter:
+      type: folders
+  input:
+    - token_auth
+    - formValues
+  output: <% $.select({'backupFolder' => $1}) %>
+...

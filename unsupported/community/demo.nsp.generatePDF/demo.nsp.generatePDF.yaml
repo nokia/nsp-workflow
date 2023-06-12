@@ -1,0 +1,24 @@
+version: '2.0'
+
+demo.nsp.generatePDF:  
+  type: direct
+  
+  output:
+    response: <% $.output %>
+    
+  output-on-error:
+    response: <% $.output %>
+
+  tasks:
+    task1:
+      action: nsp.generatePDF
+      input:
+        filename: /tmp/demo.pdf
+        html: |
+          <html>
+            <body>
+              <h1>Hello World!</h1>
+            </body>
+          </html>
+      publish:
+        output: <% task().result %>

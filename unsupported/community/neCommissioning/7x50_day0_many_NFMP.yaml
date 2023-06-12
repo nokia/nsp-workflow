@@ -1,0 +1,63 @@
+version: '2.0'
+
+7x50_day0_many_nfmp:
+  description: Commission for multiple 7x50 nodes (onboarding day 0)
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Commissioning
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  vars:
+    planningDataHTML: <% fetch_jinja('planningDataHTML') %>
+
+  input:
+    - planningData:
+    - force: False
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    initialCheck1:
+      action: std.noop
+      on-complete:
+        - configuration: <% $.planningData.len()=1 or $.force %>
+        - operatorPrompt: <% $.planningData.len()>1 and not $.force %>
+
+    operatorPrompt:
+      action: nsp.user_input
+      input:
+        title: NE Day0 Operation Approval
+        message: "Do you want to initialize the following nodes?"
+        html: <% resolve_jinja($.planningDataHTML, $) %>
+        successAction: Accept
+        errorAction: Deny
+      publish-on-error:
+        reason: <% task().result.reason %>
+      on-success:
+        - configuration
+
+    configuration:
+      with-items: host in <% $.planningData %>
+      concurrency: 10
+      workflow: 7x50_day0_nfmp
+      input:
+        description: <% $.host.neName %>
+        mgmtIP: <% $.host.mgmtIP %>
+        systemIP: <% $.host.systemIP %>
+        neName: <% $.host.neName %>
+
+...

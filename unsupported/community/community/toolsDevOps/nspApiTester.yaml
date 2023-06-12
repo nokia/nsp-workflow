@@ -1,0 +1,75 @@
+---
+version: '2.0'
+
+nspApiTester:
+  description: test NSP API
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: DevOps
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - svcEndPoint
+    - body:
+    - workflowName: demo
+    - createWorkflow: false
+
+  vars:
+    workflowJ2: <% fetch_jinja('createWorkflowForAction') %>
+    endpoint: <% $.svcEndPoint.split().last() %>
+    method: <% $.svcEndPoint.split().first().trim('[]') %>
+    version: <% $.svcEndPoint.split().last().split('/')[1] %>
+
+  output:
+    result: <% $.response %>
+  output-on-error:
+    result: <% $.error %>
+
+  tasks:
+    getServiceName:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("location") %>/v1/location/services
+      publish:
+        serviceName: <% let(ep=>$.svcEndPoint) -> task().result.content.response.data.services.where($.instances.endpoints.flatten().contains($ep)).serviceName.first() %>
+      on-success:
+        - getInfo
+
+    getInfo:
+      action: nsp.https
+      input:
+        url: <% locate_nsp($.serviceName, $.version) %><% $.endpoint %>
+        method: <% $.method %>
+        body: <% $.body %>
+      publish:
+        response: <% task().result.content %>
+      publish-on-error:
+        error: <% task().result.content %>
+      on-error:
+        - getDetails: <% not isString(task().result.content) %>
+      on-success:
+        - createWorkflow: <% $.createWorkflow %>
+
+    getDetails:
+      action: std.noop
+      publish:
+        error: <% task('getInfo').result.status %> <% task('getInfo').result.content.response.errors %>
+
+    createWorkflow:
+      action: nsp.https
+      input:
+        url: <% locate_nsp('Workflows') %>/v1/workflow
+        method: POST
+        body:
+          yaml: <% resolve_jinja($.workflowJ2, $) %>
+...

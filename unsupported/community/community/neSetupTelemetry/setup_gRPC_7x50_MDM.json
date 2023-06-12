@@ -1,0 +1,48 @@
+{
+    "type": "object",
+    "properties": [
+        {
+            "name": "neId",
+            "title": "NE ID",
+            "description": "NE ID",
+            "columnSpan": 4,
+            "newRow": true,
+            "readOnly": false,
+            "required": false,
+            "type": "string",
+            "component": {
+                "input": "autoComplete"
+            },
+            "suggest": {
+                "action": "nspWebUI.neList",
+                "name": [
+                    "neId"
+                ]
+            }
+        },
+        {
+            "description": "gRPC Username",
+            "name": "grpcUsername",
+            "title": "Username",
+            "readOnly": false,
+            "columnSpan": 4,
+            "required": true,
+            "newRow": true,
+            "type": "string",
+            "enum": null,
+            "default": "grpc"
+        },
+        {
+            "description": "gRPC Password",
+            "name": "grpcPassword",
+            "title": "Password",
+            "readOnly": false,
+            "columnSpan": 4,
+            "required": true,
+            "newRow": true,
+            "type": "password",
+            "enum": null,
+            "default": "Nokia4gnmi"
+        }
+    ]
+}

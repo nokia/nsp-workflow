@@ -1,0 +1,32 @@
+{
+    "type": "object",
+    "properties": [
+        {
+            "name": "backupFolder",
+            "title": "NE Id",
+            "readOnly": false,
+            "required": true,
+            "type": "string",
+            "component": {
+                "input": "autoComplete"
+            },
+            "suggest": {
+                "action": "neBackupFolderList"
+            }
+        },
+        {
+            "name": "backupFilename",
+            "title": "Backup",
+            "readOnly": false,
+            "required": true,
+            "newRow": true,
+            "type": "string",
+            "component": {
+                "input": "autoComplete"
+            },
+            "suggest": {
+                "action": "neBackupFileList"
+            }
+        }
+    ]
+}

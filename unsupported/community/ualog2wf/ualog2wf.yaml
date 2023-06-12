@@ -1,0 +1,40 @@
+version: '2.0'
+
+ualog2wf:
+  type: direct
+
+  tags:
+    - autocreated
+    
+  input:
+    - userActions
+    - workflowName
+
+  vars:
+    renderWF: <% fetch_jinja('renderWF') %>
+
+
+  tasks:
+    setInfo:
+      with-items: action in <% $.userActions %>
+      concurrency: 1
+      action: std.echo
+      input:
+        output:
+          url: <% $.action.url %>
+          method: <% $.action.method %>
+          body: <% json_parse($.action.params).toDict($.key,$.val).request %>
+      publish:
+        actions: <% task().result %>
+      on-success:
+        - createWorkflow
+        
+    createWorkflow:
+      action: nsp.https
+      input:
+        url: <% locate_nsp('Workflows') %>/v1/workflow
+        method: POST
+        body:
+          yaml: <% resolve_jinja($.renderWF, $) %>
+
+...

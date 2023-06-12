@@ -1,0 +1,84 @@
+version: '2.0'
+
+textfsm_demo:  
+  type: direct
+  
+  output:
+    response: <% $.output %>
+    
+  output-on-error:
+    response: <% $.output %>
+
+  tasks:
+    task1:
+      action: nsp.textFSM
+      input:
+        response: |
+          Routing Engine status:
+            Slot 0:
+              Current state                  Master
+              Election priority              Master (default)
+              Temperature                 39 degrees C / 102 degrees F
+              CPU temperature             55 degrees C / 131 degrees F
+              DRAM                      2048 MB
+              Memory utilization          76 percent
+              CPU utilization:
+                User                      95 percent
+                Background                 0 percent
+                Kernel                     4 percent
+                Interrupt                  1 percent
+                Idle                       0 percent
+              Model                          RE-4.0
+              Serial ID                      xxxxxxxxxxxx
+              Start time                     2008-04-10 20:32:25 PDT
+              Uptime                         180 days, 22 hours, 45 minutes, 20 seconds
+              Load averages:                 1 minute   5 minute  15 minute
+                                                0.96       1.03       1.03
+          Routing Engine status:
+            Slot 1:
+              Current state                  Backup
+              Election priority              Backup
+              Temperature                 30 degrees C / 86 degrees F
+              CPU temperature             31 degrees C / 87 degrees F
+              DRAM                      2048 MB
+              Memory utilization          14 percent
+              CPU utilization:
+                User                       0 percent
+                Background                 0 percent
+                Kernel                     0 percent
+                Interrupt                  1 percent
+                Idle                      99 percent
+              Model                          RE-4.0
+              Serial ID                      xxxxxxxxxxxx
+              Start time                     2008-01-22 07:32:10 PST
+              Uptime                         260 days, 10 hours, 45 minutes, 39 seconds
+        template: |
+          # Chassis value will be null for single chassis routers.
+          Value Filldown Chassis (.cc.?-re.)
+          Value Required Slot (\d+)
+          Value State (\w+)
+          Value Temp (\d+)
+          Value CPUTemp (\d+)
+          Value DRAM (\d+)
+          Value Model (\S+)
+
+          # Allway starts in 'Start' state.
+          Start
+            ^${Chassis}
+            # Record current values and change state.
+            # No record will be output on first pass as 'Slot' is 'Required' but empty.
+            ^Routing Engine status: -> Record RESlot
+
+          # A state transition was not strictly necessary but helpful for the example.
+          RESlot
+            ^\s+Slot\s+${Slot}
+            ^\s+Current state\s+${State}
+            ^\s+Temperature\s+${Temp} degrees
+            ^\s+CPU temperature\s+${CPUTemp} degrees
+            ^\s+DRAM\s+${DRAM} MB
+            # Transition back to Start state.
+            ^\s+Model\s+${Model} -> Start
+
+          # An implicit EOF state outputs the last record.        
+      publish:
+        output: <% task().result %>

@@ -1,0 +1,59 @@
+---
+version: '2.0'
+
+reportingPortsMDC:
+  description: Ports inventory of a single NE using CSV format
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: Reporting
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - neId
+
+  vars:
+    reportDir: <% folder_exists('/tmp/reports') %>
+    reportFilename: /tmp/reports/ports_<% $.neId %>_<% get_local_time() %>.csv
+
+  output:
+    result: done
+    filename: <% $.reportFilename %>
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getPortsInfo:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("restconf") %>/data/network-device-mgr:network-devices/network-device=<% $.neId %>/root/nokia-state:state/port
+      publish:
+        data: '<% task().result.content["nokia-state:port"] %>'
+      on-success:
+        - dumpReport: <% $.reportDir %>
+        - createFolder: <% not $.reportDir %>
+
+    createFolder:
+      action: folder.create
+      input:
+        foldername: /tmp/reports
+        mode: recursive
+      on-success:
+        - dumpReport
+
+    dumpReport:
+      action: file.write
+      input:
+        filename: <% $.reportFilename %>
+        data: <% csv_dump($.data,2,'/',skip=>false) %>
+...

@@ -1,0 +1,11 @@
+name: createTemplateFromCliScript
+tags:
+  - WFM Demo
+  - NSP20.6
+template: |
+  name: {{ targetName }}
+  tags:
+    - autocreated
+  template: |
+    {% for line in template.j2.split('\n') %}{{ line }}
+    {% endfor %}

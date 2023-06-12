@@ -1,0 +1,92 @@
+version: '2.0'
+
+userInputDemo:
+  description: 'Waits for user input on task3, uses the input in task4'
+  type: direct
+  
+  tags:
+    - test
+  
+  input:
+    - wait: 1
+    - token_auth
+  
+  tasks:
+    startTask:
+      action: std.noop
+      publish:
+        status: "starting looper"
+      on-success:
+        - api1
+        - api2
+
+    api1:
+      wait-before: <% $.wait %>
+      action: std.http
+      input:
+        url: 'http://135.121.19.141:8989/v2/workflows'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+      publish:
+        lifeCycleState: <% task().result.content %>
+      on-success:
+        - api3
+      on-error:  
+        - errorTask
+  
+    api2:
+      wait-before: <% $.wait %>
+      action: std.http
+      input:
+        url: 'http://135.121.19.141:8989/v2/workflows'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+      publish:
+        lifeCycleState: <% task().result.content %>
+      on-success:
+        - api3
+      on-error:  
+        - errorTask
+  
+    api3:
+      join: all
+      wait-before: <% $.wait %>
+      action: std.mistral_http
+      input:
+        url: 'https://135.121.88.81:8543/wfm/api/v1/execution/kafkaNotify'
+        method: POST
+        verify: False
+        headers:
+          Content-Type: 'application/json'
+          Authorization: 'Bearer <% $.token_auth %>'
+        body:
+          execution_id: <% execution().id %>
+      publish:
+        userInput: <% task().result %>
+      on-success:
+        - api4: <% $.userInput.taskNum = 4 %>
+        - api5: <% $.userInput.taskNum = 5 %>
+      on-error:  
+        - errorTask
+  
+    api4:
+      wait-before: <% $.wait %>
+      action: std.echo
+      input:
+        output: <% $.userInput %>
+  
+    api5:
+      wait-before: <% $.wait %>
+      action: std.echo
+      input:
+        output: <% $.userInput %>
+        
+    errorTask:
+      publish:
+        status: "Error on this task"
+
+

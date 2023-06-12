@@ -1,0 +1,85 @@
+version: '2.0'
+
+7x50_day0_mdm:
+  type: direct
+
+  description: Commission 7x50 (onboarding day 0, using SNMPv2)
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   7x50 Device Commissioning for MDM management (SNMPv2, NETCONF)
+    author:  NOKIA DEMO
+    signature: 528c2ad6e7aacf1bd6986266d334a0d150c43a5046202c76feb2261d27e119f7fbf05ebb9d470b57ea30e8e0fd2029888777221ad4ff4d89958c0ac35a0bdaafcf53d888a3e342893ed46f6b0348c49c482f4ad6eb51a25f5f0faf34a855b235d2c6e4c560ae74067374f1a798d269c70731f59d4de1e62ad627d349204b3864a9bde90e36bcde7224fb8f1bd4c4ad3964d6951d2770ef09474bad29ce05bb7f586ac7471ad78dc6b728ea9b2278ad9b45fc9e2e706358a5bac5d228d436789e0fd8224573055c9365193601ec5997cef5d600625589895b644a5dd2a1ebae1171740c7d4c1450853de12e3f467f3e7e7bacf7ab3fe524b6d2ba326d0a7846d1
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_commissioning
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - mgmtIP:
+    - systemIP:
+    - neName:
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    configure_node_classic:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!classic-cli
+          - configure system name "<% $.neName %>"
+          - configure router interface "system" address <% $.systemIP %>/32
+          - configure system security ssh preserve-key
+          - configure system snmp no shutdown
+          - configure system snmp packet-size 9216
+          - configure system security snmp community private rwa version both
+          - configure system netconf no shutdown
+          - configure system netconf auto-config-save
+          - configure system security user "admin" access console netconf
+          - configure system security profile "administrative" netconf base-op-authorization lock
+          - admin save
+          - configure system management-interface configuration-mode model-driven
+          - sleep 1
+      publish:
+        status: <% task().result %>
+      on-success:
+        - configure_node_md
+
+    configure_node_md:
+      action: nsp.sr_cli
+      input:
+        host: '<% $.mgmtIP %>'
+        username: admin
+        password: admin
+        cmd:
+          - /!md-cli
+          - configure private
+          - system management-interface yang-modules base-r13-modules false
+          - system management-interface yang-modules nokia-modules false
+          - system management-interface yang-modules nokia-combined-modules true
+          - system management-interface yang-modules openconfig-modules true
+          - commit
+
+...

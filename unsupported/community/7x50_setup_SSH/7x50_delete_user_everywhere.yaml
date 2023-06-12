@@ -1,0 +1,97 @@
+version: '2.0'
+
+7x50_delete_user_everywhere:
+  type: direct
+
+  description: Deletes SSH user from all Nokia 7750 SR routers.
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Deletes a local CLI user from all 7750 SR routers
+    author:  NOKIA DEMO
+    signature: 1e91ac561e767ec2517534d2ad3c6f6c79cb2966abb4883d503ebbc668fe33ae0347409053d005492f6bde7213e63a01370a28f57599f706eb6d0abd6edb5e4c8666dc38c355261b012172f1a3fbd761c7a9d77d4c050e30854c6dce2f177f0c0f77c4ff989a73667ad36105403295cedd51b8e3a95c06efc07bae8edab084731d5eab7f353978836013b7f08d0e7871ec153c0653a0f6580a77ee776742cfb0138235688799dd536a8b01461ada15420217b0e248eb1b01db2901272f00422f39b4958d730cc59a48e5165e9f61b35562a4a9be44a6ee3b5b4ae7b8aed5401f2c60053ccc3addc7d30a60f0e09971fe9d5c741b7f6870c0ae47914e573652ec
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_SSH
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - sshUsername: nspuser
+    - concurrency: 1
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        getHosts
+
+    getHosts:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=product='7750 SR'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        neInventory: <% task().result.content.response.data %>
+      on-success:
+        - deleteSSHUserMDM
+        - deleteSSHUserNFMP
+
+    deleteSSHUserMDM:
+      with-items: host in <% $.neInventory.where($.sourceType=mdm) %>
+      concurrency: <% int($.concurrency) %>
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.host.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!md-cli
+          - edit-config global
+          - configure system security user-params local-user delete user <% $.sshUsername %>
+          - commit
+          - quit-config
+      publish:
+        status: <% task().result %>
+
+    deleteSSHUserNFMP:
+      with-items: host in <% $.neInventory.where($.sourceType=nfmp) %>
+      concurrency: <% int($.concurrency) %>
+      action: nsp.sr_cli
+      input:
+        host: <% $.host.ipAddress %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - configure system security no user <% $.sshUsername %>
+          - exit all
+      publish:
+        status: <% task().result %>
+
+...

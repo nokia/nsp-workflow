@@ -1,0 +1,13 @@
+---
+version: '2.0'
+
+nspWfmActionList:
+  description: get list of WFM actions
+  base: nsp.https
+  base-input:
+    url: <% locate_nsp("Workflows") %>/v1/action
+  input:
+    - token_auth
+    - formValues: ""
+  output: <%  $.content.response.data.select({name=>$.name}) %>
+...

@@ -1,0 +1,67 @@
+---
+version: '2.0'
+
+setup_gRPC_7x50_MDM:
+  description: Enable gRPC on a 7x50 node
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Commissioning
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - neId
+    - grpcUsername: grpc
+    - grpcPassword: Nokia4gnmi
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    checkHost:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host:     <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - grpcSetup: <% $.hosttype = 'mdm' %>
+        - fail: <% $.hosttype = 'nfmp' %>
+
+    grpcSetup:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!md-cli
+          - edit-config private
+          - configure system security user-params local-user user "<% $.grpcUsername %>" password "<% $.grpcPassword %>"
+          - configure system security user-params local-user user "<% $.grpcUsername %>" access grpc
+          - configure system security user-params local-user user "<% $.grpcUsername %>" console member "administrative"
+          - configure system grpc tls-server-profile "tls-server-profile"
+          - configure system grpc admin-state enable
+          - commit
+          - quit-config
+...

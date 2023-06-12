@@ -1,0 +1,36 @@
+name: planningDataHTML
+tags:
+  - WFM Demo
+template: |
+  <!doctype html>
+  <html>
+    <style>
+      table {font-family: NokiaPure, sans-serif;border-collapse: collapse;width: 100%;}
+      td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}
+      tr:nth-child(even) {background-color: #dddddd;}
+      lime {margin-left: 19px;height: 12px;width: 12px;background-color: lime;border-radius: 50%;display: inline-block;}
+      red {margin-left: 19px;height: 12px;width: 12px;background-color: red;border-radius: 50%;display: inline-block;}
+    </style>
+    
+    <div style="font-size: 1.5em; font-weight: 700; margin:10px; font-family: NokiaPure, sans-serif;">
+      {{title}}
+    </div>
+    <div style="padding-right: 10px;">     
+      <table>
+        <tbody>
+          <tr>
+            <th>NE Name</th>
+            <th>System IP Type</th>
+            <th>Management IP</th>
+          </tr>
+          {% for item in planningData %}
+          <tr>
+            <td>{{item.neName}}</td>
+            <td>{{item.systemIP}}</td>
+            <td>{{item.mgmtIP}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>    
+    </div>  
+  </html>

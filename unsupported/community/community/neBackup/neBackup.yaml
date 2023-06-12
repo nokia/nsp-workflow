@@ -1,0 +1,83 @@
+---
+version: '2.0'
+
+neBackup:
+  description: Creates NE backup of an MD managed SR OS node
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Operations
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - neId
+
+  vars:
+    backupDir: <% folder_exists('/tmp/backup/'+$.neId) %>
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    checkHost:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host: <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - fail: <% $.hosttype = 'nfmp' %>
+        - captureConfig: <% $.hosttype = 'mdm' %>
+
+    captureConfig:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        cmds:
+          - /!md-cli
+          - environment more false
+          - admin show configuration
+      publish:
+        cfg: <% task().result %>
+      on-success:
+        - dumpBackup: <% $.backupDir %>
+        - createFolder: <% not $.backupDir %>
+
+    createFolder:
+      action: folder.create
+      input:
+        foldername: /tmp/backup/<% $.neId %>
+        mode: recursive
+      on-success:
+        - dumpBackup
+
+    dumpBackup:
+      action: file.write
+      join: 1
+      input:
+        folder: /tmp/backup/<% $.neId %>
+        filename: <% $.hostname %>_<% get_local_time() %>.cfg
+        data: <% let($.cfg.responses[2].split("\r\n")) -> $.delete($.len()-2,2).join('\n') %>
+...

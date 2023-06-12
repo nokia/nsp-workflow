@@ -1,0 +1,13 @@
+---
+version: '2.0'
+
+nspApiEndpointList:
+  description: get list of API service endpoints
+  base: nsp.https
+  base-input:
+    url: <% locate_nsp("location") %>/v1/location/services
+  input:
+    - token_auth
+    - formValues: ""
+  output: <%  $.content.response.data.services.instances.endpoints.flatten().select({endpoint=>$}) %>
+...

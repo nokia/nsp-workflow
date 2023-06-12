@@ -1,0 +1,20 @@
+version: '2.0'
+
+uuid_demo:
+  type: direct
+  
+  input:
+    - dnsname: "developer.nokia.com"
+    - url: "http://www.nokia.com"
+    
+  tasks:
+    task1:
+      action: std.noop
+      publish:
+        uuid1: <% generate_uuid("default") %>
+        uuid3: <% generate_uuid("MD5", "dns", $.dnsname) %>
+        uuid4: <% generate_uuid("random") %>
+        uuid5: <% generate_uuid("SHA-1", "url", $.url) %>
+
+
+

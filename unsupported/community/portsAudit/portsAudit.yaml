@@ -1,0 +1,44 @@
+---
+version: '2.0'
+
+portsAudit:
+  description: Port audit
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: Inventory
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  output:
+    result: success
+
+  output-on-error:
+    result: <% $.html %>
+
+  vars:
+    template: <% fetch_jinja('portsInventory') %>
+
+  tasks:
+    getPortsInfo:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("ports") %>/v1/ports?filter=(operState='disabled' and adminState='unlocked')
+      publish:
+        portList: <% task().result.content.response %>
+      on-success:
+        - auditFailed: <% $.portList.data.count()>0 %>
+
+    auditFailed:
+      action: std.fail
+      publish-on-error:
+        html: <% resolve_jinja($.template, $.portList) %>
+...

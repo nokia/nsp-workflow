@@ -1,0 +1,29 @@
+version: '2.0'
+
+demo.nsp.cli:
+  type: direct
+  
+  input:
+    - mgmtIP
+    - username: admin
+    - password: admin
+  
+  tasks:
+    task1:
+      action: nsp.cli
+      input:
+        host: <% $.mgmtIP %>
+        username: <% $.username %>
+        password: <% $.password %>
+        timeout: 10
+        prompt: auto
+        stopOn: '.*(MINOR|MAJOR|CRITICAL|Error): .*([\s\S]*?)#'
+        resultFilter: "$.split(\"\\r\\n\").delete(0).where($.indexOf('===') = -1 )"
+        private_key_filename:
+        cmds:
+          - environment more false
+          - show time
+          - show users
+          - command: show users
+            resultFilter: "$.split('\\r\\n').where($.indexOf('Number of users') = 0 )"
+          - show port 1/1/1

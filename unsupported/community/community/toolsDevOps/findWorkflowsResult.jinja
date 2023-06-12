@@ -1,0 +1,24 @@
+name: findWorkflowsResult
+tags:
+  - WFM Demo
+  - NSP20.6
+
+template: |
+  <!doctype html>
+  <html lang="en">
+  {% if items is defined and items|length > 0 %}
+    <div style="color:darkblue;">
+      Found <b><i>{{searchPattern}}</i></b> here:
+      <ul>
+      {% for item in items %}
+        <li><a target="_blank" rel="noopener noreferrer" href={{baseURL}}/workflows/{{item}}/definition>{{item}}</a>
+      {% endfor %}
+      </ul>
+    </div>  
+  {% else %}
+    <div style="color:red; font-size:150%;">
+      <i>{{searchPattern}}</i> not found!
+    </div>
+  {% endif %}
+  </html>
+  

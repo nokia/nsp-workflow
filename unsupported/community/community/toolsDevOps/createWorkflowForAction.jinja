@@ -1,0 +1,25 @@
+name: createWorkflowForAction
+tags:
+  - WFM Demo
+  - NSP20.6
+
+template: |
+  version: '2.0'
+
+  {{ workflowName }}:
+    type: direct
+
+    tags:
+      - autocreated
+
+    tasks:
+      callRPC:
+        action: nsp.https
+        input:
+          url: <% locate_nsp('{{ serviceName }}', '{{ version }}') %>{{ endpoint }}
+          method: {{ method }}
+          body: {{ body }}
+        publish:
+          response: <% task().result.content %>
+        publish-on-error:
+          error: <% task().result.content %>

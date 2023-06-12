@@ -1,0 +1,17 @@
+version: '2.0'
+
+epoch_demo:
+  type: direct
+  
+  tasks:
+    getEpoch:
+      action: std.js
+      input:
+        script: return Date.now()/1000|0;
+      publish:
+        timestampJS: <% task().result %>
+        getTime: <% get_time() %>
+        getLocalTime: <% get_local_time() %>
+        getUTCTime: <% get_UTC_time() %>
+        getUTCDate: <% get_UTC_time("%d.%m.%Y") %>
+

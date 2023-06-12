@@ -1,0 +1,71 @@
+---
+version: '2.0'
+
+neBackupCleanup:
+  description: Cleanup NE backups from filesystem
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Operations
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - dryRun: true
+
+  vars:
+    result: []
+
+  output:
+    files: <% $.worklist %>
+    result: <% $.result %>
+
+  tasks:
+    getFolders:
+      action: folder.list
+      input:
+        foldername: /tmp/backup
+        filter:
+          type: folders
+      publish:
+        folders: <% task().result %>
+      on-success:
+        - getFiles
+
+    getFiles:
+      with-items: folder in <% $.folders %>
+      action: folder.list
+      input:
+        foldername: /tmp/backup/<% $.folder %>
+        filter:
+          age: ">3600"
+          size: ">1000"
+      publish:
+        files: <% task().result %>
+      on-success:
+        - mergeResults
+
+    mergeResults:
+      action: std.noop
+      publish:
+        worklist: <% $.folders.zip($.files) %>
+      on-success:
+        - cleanup: <% not $.dryRun %>
+      
+    cleanup:
+      with-items: item in <% $.worklist %>
+      action: file.remove
+      input:
+        folder: /tmp/backup/<% $.item[0] %>
+        filenames: <% $.item[1] %>
+      publish:
+        result: <% task().result %>
+...

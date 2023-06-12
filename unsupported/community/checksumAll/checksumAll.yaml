@@ -1,0 +1,63 @@
+version: '2.0'
+
+checksumAll:
+  description: automation artifact checker  
+  type: direct
+  
+  tasks:
+    task1:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("Workflows") %>/v1/workflow
+        method: GET
+      publish:
+        workflows: <% dict(task().result.content.response.data.select([$.name, chksumMD5($.definition)])) %>
+        wfdocs: <% dict(task().result.content.response.data.select([$.name, chksumMD5($.details.readme)])) %>
+      on-success:
+        - task2
+
+    task2:
+      with-items: wfname in <% $.workflows.keys() %>
+      action: nsp.https
+      input:
+        url: <% locate_nsp("Workflows") %>/v1/workflow/<% $.wfname %>/ui
+        method: GET
+        resultFilter: dict("<% $.wfname %>" => chksumMD5($.content.response.data))
+      publish:
+        schemaforms: <% task().result.content.aggregate($1+$2) %>
+      on-success:
+        - task3
+
+    task3:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("Workflows") %>/v1/action
+        method: GET
+      publish:
+        actions: <% dict(task().result.content.response.data.select([$.name, chksumMD5($.definition)])) %>
+      on-success:
+        - task4
+
+    task4:
+      action: nsp.https
+      input:
+        url: <% locate_nsp("Workflows") %>/v1/jinja-template
+        method: GET
+      publish:
+        j2templates: <% dict(task().result.content.response.data.select([$.name, chksumMD5($.definition)])) %>
+      on-success:
+        - task5
+
+    task5:
+      action: nsp.https
+      input:
+        url: <% locate_nsp('restconf') %>/data/ibn-administration:ibn-administration/intent-type-catalog
+      publish:
+        intent: <% task().result.content['ibn-administration:intent-type-catalog']['intent-type'].select({name=>$.name, version=>$.version, yang=>chksumMD5($.module), script=>chksumMD5($['script-content']), target=>chksumMD5($['target-component']), resources=>chksumMD5($.get('resource')) }) %>
+      on-success:
+        - done
+      on-error:
+        - done
+
+    done:
+      action: std.noop

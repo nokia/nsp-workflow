@@ -1,0 +1,111 @@
+version: '2.0'
+
+7x50_setup_gRPC:
+  type: direct
+
+  description: Enable gRPC for telemetry collection
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Setup gRPC on Nokia SROS nodes
+    author:  NOKIA DEMO
+    signature: 8e39aca1a24eb6492f2b2d40769eb3d01f3e9d7ba292a40fa4fa07d4b6bab1b172fe71761a2786fe39d376f8a105e8f52b87b80e6562526ca3981dd8d5bce2bb09b95a42c291eed03ccb906f9cd113e789b8317524a7ba5fb2af5ecc953a2d40eae50ee2a467d59e06fea09d3c83a947841d86e582c99fc7d18a1afc2f911442b8e7b055d9b874823a90965ed1ba06c040b11a823c0daf261b7f117e5185f7d2b15a4e97a55cae84699d7165b0816ee6ad16a0237e1ca8db525c904952c27c7cccc8c0b4e8eda4c6ee69507b0a5790fd8f9b4900f36ec64c099b9afb9cc6fe410467544fd926146783a0da79068f93c4b7312a9e3aaf0b35337c76ecaab07bb3
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_gRPC
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth
+    - neId: '1.1.1.1'
+    - grpcUsername: grpc
+    - grpcPassword: Nokia4gnmi
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        checkHost
+        
+    checkHost:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host:     <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - grpcSetupMDM: <% $.hosttype = 'mdm' %>
+        - grpcSetupNFMP: <% $.hosttype = 'nfmp' %>
+
+    grpcSetupMDM:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!md-cli
+          - edit-config private
+          - configure system security user-params local-user user "<% $.grpcUsername %>" password "<% $.grpcPassword %>"
+          - configure system security user-params local-user user "<% $.grpcUsername %>" access grpc
+          - configure system security user-params local-user user "<% $.grpcUsername %>" console member "administrative"
+          - configure system grpc tls-server-profile "tls-server-profile"
+          - configure system grpc admin-state enable
+          - commit
+          - quit-config
+
+    grpcSetupNFMP:
+      action: nsp.sr_cli
+      input:
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - configure system security user "<% $.grpcUsername %>"
+          - password "<% $.grpcPassword %>"
+          - access grpc
+          - console member "administrative"
+          - exit all
+          - configure system grpc
+          - tls-server-profile "tls-server-profile"
+          - no shutdown
+          - exit all
+
+...

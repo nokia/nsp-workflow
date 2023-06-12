@@ -1,0 +1,23 @@
+version: '2.0'
+
+ualogs:
+  type: direct
+
+  tags:
+    - autocreated
+
+  tasks:
+    callRPC:
+      action: std.http
+      input:
+        url: <% locate_nsp('nspos-activitylogs-control', 'v1') %>/v1/activityLogs
+        method: GET
+        verify: /opt/nsp/os/ssl/certs/nsp/nsp.pem
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% env().token_auth %>
+        body: None
+      publish:
+        response: <% task().result.content %>
+      publish-on-error:
+        error: <% task().result.content %>

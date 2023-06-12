@@ -1,0 +1,286 @@
+version: '2.0'
+
+7x50_setup_TLS:
+  type: direct
+
+  description: Issue/Reissue and install certs and activate TLS on Nokia 7x50 routers
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Setup TLS with certificates on Nokia SROS nodes
+    author:  NOKIA DEMO
+    signature: 783d35786d6d025fd6534ba2fa224b91c67ee1a4f961024066c221228207d27d93439a9b7e2b1d7a57fb40c63ffd6222632a6f52c03238a5bc3de306a095ce8f2fc9f7f8a0ab2f65b07f23f12c25b9afa0a8f03cec2d5228bcfc184a1d66a84ad4a4649c628d6eae280dec24c162999fdb3332dc0f904a47b83d67ff0e41f491af9ace13298b27155d2d57c1dffe4d09bb7ffb6612c36d6ffbaa6387e84b5250c08d1679c77b709f4c219ce20e429d2e30531baf671567120e468d7b4e45073be2854a2d0104a9488f53b3cc635f7ffb1fa0087daf21936d7980bdffe8a23c357a231dbfce1563dd83e13097e42c4d5ca3de65c4878dba2d9c789bdb31b6924d
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_TLS
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - neId: '1.1.1.1'
+
+  output:
+    result: done
+    expDateBefore: <% $.exp_old %>
+    expDateAfter: <% $.exp_new %>
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        checkHost
+
+    checkHost:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host:     <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - checkCaCertificate
+
+    checkCaCertificate:
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          cd /opt/nsp/os/ssl/certs/telemetry
+          /opt/nsp/os/jre/bin/keytool -list -alias mytelemetryca -keystore /opt/nsp/os/ssl/nsp.truststore -storepass '<% $.env.pkiStorepass %>'
+      on-error:
+        - initializeCA
+      on-success:
+        - checkHostCertificate
+
+    checkHostCertificate:
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          cd /opt/nsp/os/ssl/certs/telemetry
+          openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
+      publish:
+        exp_old: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
+      on-error:
+        - copyCaCertificatesToNode
+      on-success:
+        - reissueHostCertificate
+
+    reissueHostCertificate:
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          cd /opt/nsp/os/ssl/certs/telemetry
+          cp -f <% $.hostname %>_cert.pem <% $.hostname %>_cert.pem.bak
+          cp -f private/<% $.hostname %>_key.pem private/<% $.hostname %>_key.pem.bak
+          openssl ca -revoke <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -cert CAcert.pem
+          # sed -i '/CN=<% $.hostname %>/d' /etc/pki/CA/index.txt
+          openssl genrsa -out private/<% $.hostname %>_key.pem 2048
+          openssl req -out <% $.hostname %>_certreq.pem -key private/<% $.hostname %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.hostname %>/emailAddress=nobody@nokia.com"
+          openssl ca  -out <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.host %>") -infiles <% $.hostname %>_certreq.pem
+          openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+      publish:
+        exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
+      on-success:
+        - activateHostCertificateMDM: <% $.hosttype = 'mdm' %>
+        - activateHostCertificateNFMP: <% $.hosttype = 'nfmp' %>
+
+    activateHostCertificateMDM:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!classic-cli
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
+
+    activateHostCertificateNFMP:
+      action: nsp.sr_cli
+      input:
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate reload type cert-key-pair hostcert.crt protocol tls key-file hostkey.crt
+
+    initializeCA:
+      join: 1
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          mkdir /opt/nsp/os/ssl/certs/telemetry
+          cd /opt/nsp/os/ssl/certs/telemetry
+          mkdir private
+          openssl genrsa -out private/CAkey.pem 2048
+          openssl req -out CAreq.pem -key private/CAkey.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=NSP Development Root CA/emailAddress=nobody@nokia.com"
+          touch /etc/pki/CA/index.txt
+          openssl ca -out CAcert.pem -keyfile private/CAkey.pem -batch -days 3650 -selfsign -create_serial -passin "pass:" -extensions v3_ca -infiles CAreq.pem
+          echo 01 > /etc/pki/CA/crlnumber
+          openssl ca -out CAcrl.pem -keyfile private/CAkey.pem -batch -gencrl -cert CAcert.pem -passin "pass:"
+          openssl genrsa -out private/key.pem 2048
+          openssl x509 -outform der -in CAcert.pem -out CAcert.der
+          unalias cp
+          cp -f /opt/nsp/os/ssl/nsp.truststore /opt/nsp/os/ssl/nsp.truststore.bak
+          echo -e "y" | /opt/nsp/os/jre/bin/keytool -import -alias myTelemetryCa -keystore /opt/nsp/os/ssl/nsp.truststore -file /opt/nsp/os/ssl/certs/telemetry/CAcert.der -storepass '<% $.env.pkiStorepass %>'
+      on-success:
+        - copyCaCertificatesToNode
+
+    copyCaCertificatesToNode:
+      join: 1
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          cd /opt/nsp/os/ssl/certs/telemetry
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcert.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T CAcrl.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+      on-success:
+        - createHostCertificate
+
+    createHostCertificate:
+      action: std.ssh
+      input:
+        host: '<% $.env.pkiServer %>'
+        username: '<% $.env.pkiUsername %>'
+        password: '<% $.env.pkiPassword %>'
+        cmd: |
+          cd /opt/nsp/os/ssl/certs/telemetry
+          openssl genrsa -out private/<% $.hostname %>_key.pem 2048
+          openssl req -out <% $.hostname %>_certreq.pem -key private/<% $.hostname %>_key.pem -new -passin "pass:" -subj "/C=CA/ST=Ontario/L=Ottawa/O=Nokia/OU=NSM/CN=<% $.hostname %>/emailAddress=nobody@nokia.com"
+          openssl ca  -out <% $.hostname %>_cert.pem -keyfile private/CAkey.pem -batch -passin "pass:" -days 3650 -cert CAcert.pem -policy policy_anything -extensions SAN -extfile <(printf "[SAN]\nsubjectAltName=IP:<% $.host %>") -infiles <% $.hostname %>_certreq.pem
+          openssl x509 -text -in <% $.hostname %>_cert.pem | grep "Not After"
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T <% $.hostname %>_cert.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+          curl --insecure --user <% $.env.neUsername %>:<% $.env.nePassword %> -T private/<% $.hostname %>_key.pem sftp://<% $.host %>/<% $.env.cflash %>:/
+      publish:
+        exp_old: none
+        exp_new: <% regex("\s+Not After :\s+([^\n]+)\n").replace(task().result, "\\1") %>
+      on-success:
+        - importAndConfigureMDM: <% $.hosttype = 'mdm' %>
+        - importAndConfigureNFMP: <% $.hosttype = 'nfmp' %>
+
+    importAndConfigureMDM:
+      action: nsp.mdm_cli
+      input:
+        neId: <% $.neId %>
+        authorization: Bearer <% $.token_auth %>
+        onError: stop
+        verify: False
+        cmds:
+          - /!classic-cli
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/CAcert.pem output cacert.crt format pem
+          - admin certificate import type crl  input <% $.env.cflash %>:/CAcrl.pem  output cacrl.crt  format pem
+          - /!md-cli
+          - edit-config private
+          - configure system security pki ca-profile "tls-ca" admin-state enable
+          - configure system security pki ca-profile "tls-ca" cert-file "cacert.crt"
+          - configure system security pki ca-profile "tls-ca" crl-file "cacrl.crt"
+          - configure system security tls cert-profile "tls-certs" admin-state enable
+          - configure system security tls cert-profile "tls-certs" entry 1 certificate-file "hostcert.crt"
+          - configure system security tls cert-profile "tls-certs" entry 1 key-file "hostkey.crt"
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 1 name tls-rsa-with-null-md5
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 2 name tls-rsa-with-null-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 3 name tls-rsa-with-null-sha256
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 4 name tls-rsa-with3des-ede-cbc-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 5 name tls-rsa-with-aes128-cbc-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 6 name tls-rsa-with-aes256-cbc-sha
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 7 name tls-rsa-with-aes128-cbc-sha256
+          - configure system security tls server-cipher-list "tls-ciphers" cipher 8 name tls-rsa-with-aes256-cbc-sha256
+          - configure system security tls server-tls-profile "tls-server-profile" admin-state enable
+          - configure system security tls server-tls-profile "tls-server-profile" cert-profile "tls-certs"
+          - configure system security tls server-tls-profile "tls-server-profile" cipher-list "tls-ciphers"
+          - commit
+
+    importAndConfigureNFMP:
+      action: nsp.sr_cli
+      input:
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - admin certificate import type cert input <% $.env.cflash %>:/<% $.hostname %>_cert.pem   output hostcert.crt format pem
+          - admin certificate import type key  input <% $.env.cflash %>:/<% $.hostname %>_key.pem    output hostkey.crt  format pem
+          - admin certificate import type cert input <% $.env.cflash %>:/CAcert.pem output cacert.crt format pem
+          - admin certificate import type crl  input <% $.env.cflash %>:/CAcrl.pem  output cacrl.crt  format pem
+          - configure system security pki ca-profile "tls-ca" create
+          - cert-file "cacert.crt"
+          - crl-file "cacrl.crt"
+          - no shutdown
+          - exit all
+          - configure system security tls cert-profile "tls-certs" create
+          - entry 1 create
+          - cert "hostcert.crt"
+          - key "hostkey.crt"
+          - exit
+          - no shutdown
+          - exit all
+          - configure system security tls server-cipher-list "tls-ciphers" create
+          - cipher 1 name tls-rsa-with-null-md5
+          - cipher 2 name tls-rsa-with-null-sha
+          - cipher 3 name tls-rsa-with-null-sha256
+          - cipher 4 name tls-rsa-with3des-ede-cbc-sha
+          - cipher 5 name tls-rsa-with-aes128-cbc-sha
+          - cipher 6 name tls-rsa-with-aes256-cbc-sha
+          - cipher 7 name tls-rsa-with-aes128-cbc-sha256
+          - cipher 8 name tls-rsa-with-aes256-cbc-sha256
+          - exit all
+          - configure system security tls server-tls-profile "tls-server-profile" create
+          - cert-profile "tls-certs"
+          - cipher-list  "tls-ciphers"
+          - no shutdown
+          - exit all
+
+...

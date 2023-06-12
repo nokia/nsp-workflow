@@ -1,0 +1,17 @@
+{
+    "type": "object",
+    "properties": [
+        {
+            "description": "Send Report as Email",
+            "name": "sendEmail",
+            "title": "Send Email",
+            "readOnly": false,
+            "columnSpan": 4,
+            "required": true,
+            "newRow": true,
+            "type": "boolean",
+            "enum": null,
+            "default": false
+        }
+    ]
+}

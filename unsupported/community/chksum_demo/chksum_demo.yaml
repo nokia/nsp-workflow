@@ -1,0 +1,25 @@
+version: '2.0'
+
+chksum_demo:
+  type: direct
+  input:
+    - folder
+    - filename: /tmp/hosts
+    
+  tasks:
+    task1:
+      action: file.chksumMD5
+      input:
+        folder: <% $.folder %>
+        filename: <% $.filename %>
+      publish:
+        md5: <% task().result %>
+
+    task2:
+      action: file.chksumSHA256
+      input:
+        folder: <% $.folder %>
+        filename: <% $.filename %>
+      publish:
+        sha256: <% task().result %>
+

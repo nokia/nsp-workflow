@@ -1,0 +1,66 @@
+---
+version: '2.0'
+
+convertCliScriptEasy:
+  description: Converts NFMP CLI script to a workflow
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: DevOps
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+  
+  input:
+    - cliScript
+    - workflowName
+    
+  vars:
+    renderWF: <% fetch_jinja('createSimpleWorkflowFromCliScript') %>
+    
+  tasks:
+    convert_script:
+      action: std.javascript
+      input:
+        context : <% $ %>
+        script: |
+          function toCamel(identifier) {
+            return identifier.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, function(match, p1) { return p1.toUpperCase(); });
+          };
+          
+          function toCamelYaql(match, p1) {
+            return '<'+'% $.'+toCamel(p1)+' %'+'>';
+          };
+          
+          re = /\$([^\$]+)\$(\(([^)]+)\))?/g;
+          vars = {};
+          while( match = re.exec( $.cliScript ) ) {
+            variable = toCamel(match[1]);
+            if (match[3] && match[3].startsWith('default')) {
+              vars[variable]=match[3].substring(7).trim();
+            } else if (!(variable in vars)) {
+              vars[variable]=null;
+            }
+          }
+          j2 = $.cliScript.trim().replace(re, toCamelYaql);
+          return {'vars': vars, 'j2': j2};
+      publish:
+        template: <% task().result %>
+      on-success:
+        - createWorkflow
+        
+    createWorkflow:
+      action: nsp.https
+      input:
+        url: <% locate_nsp('Workflows') %>/v1/workflow
+        method: POST
+        body:
+          yaml: <% resolve_jinja($.renderWF, $) %>
+...

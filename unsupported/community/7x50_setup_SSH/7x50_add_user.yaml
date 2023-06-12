@@ -1,0 +1,134 @@
+version: '2.0'
+
+7x50_add_user:
+  type: direct
+
+  description: >
+    Adds a local CLI user to a Nokia 7x50 router. The SSH session will be
+    authenticated without password using authentication keys. The required
+    RSA key is copied from the corresponding WFM machine.
+
+  tags:
+    - demo workflow by NOKIA
+
+  workflow_meta:
+    title:   Add CLI user to a node
+    author:  NOKIA DEMO
+    signature: 514a2c209b5c9f8865c528518aa38472469b39f1d0ac4751199efe7e129d14f3bc6309c9f161f3fae711b21d48add01ca360b1101f83696325875c4a4a4f764531bd07c462baef56807b59ecd44a6c06a240103c471819ecd404db0b27a3ad813af5d1d32dc79982d1ecbfbee586336b0959981a9988df659ce855b255fb6028ed02bfc789eb5001efb9329adcad65f7ce553f7b607213674f96001cb125e92bb17ee4a2cf24e79a8be93f9c206dc7fdaa0bebe78cbe298e8f9322499bab3892b91b47a707aff274bd84eb015a3560044a4d58aea85b40dc10998b9bacb0fa1f81fcb89fa1471f341a5317aad9b863573ee3e85a14898c50b5fa205a25ce44b2
+    version: '1.0.0'
+    license: BSD-3
+    package: 7x50 Automation
+    deprecated: false
+    urls:
+      homepage: https://github.com/nokia/nsp-workflow/tree/master/unsupported/7x50_setup_SSH
+      repository: https://github.com/nokia/nsp-workflow
+      bugs: https://github.com/nokia/nsp-workflow/issues
+    dependencies:
+      platform:
+        nspOS: ['19.6']
+      nodal:
+        - type: 'Nokia 7x50'
+          releases: ['19.5','19.7']
+          mgmtmode: ['classic', 'model-driven']
+
+  input:
+    - token_auth:
+    - neId: '1.1.1.1'
+    - sshUsername: nspuser
+
+  output:
+    result: done
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    getEnvironment:
+      action: environment
+      publish:
+        env: '<% task().result %>'
+      on-success:
+        checkHost
+
+    checkHost:
+      action: std.http
+      input:
+        url: <% locate_nsp("networkElements") %>/v1/networkElements?filter=neId='<% $.neId %>'
+        method: GET
+        verify: False
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer <% $.token_auth %>
+      publish:
+        hostInfo: '<% task().result.content.response.data %>'
+      on-success:
+        - fail: <% $.hostInfo = [] %>
+        - getHostInfo: <% $.hostInfo != [] %>
+
+    getHostInfo:
+      action: std.noop
+      publish:
+        host:     <% $.hostInfo.ipAddress.first() %>
+        hostname: <% $.hostInfo.neName.first() %>
+        hosttype: <% $.hostInfo.sourceType.first() %>
+      on-success:
+        - get_public_key
+
+    get_public_key:
+      action: std.ssh
+      input:
+        host: '<% $.env.wfmServer %>'
+        username: '<% $.env.wfmUsername %>'
+        password: '<% $.env.wfmPassword %>'
+        cmd: |
+          cat ~/.ssh/id_rsa.pub
+      publish:
+        rsakey: <% regex("\s*ssh-rsa\s+(\S+)\s+.*\n").replace(task().result, "\\1") %>
+      on-success:
+        - addSSHUserMDM: <% $.hosttype = 'mdm' %>
+        - addSSHUserNFMP: <% $.hosttype = 'nfmp' %>
+
+    addSSHUserMDM:
+      action: std.http
+      input:
+        url: https://<% $.env.mdcServer %>:<% $.env.mdcPort %>/restconf/data/network-device-mgr:network-devices/network-device=<% $.neId %>/root/nokia-conf:configure/system/security/user-params/local-user/user=<% $.sshUsername %>
+        method: PUT
+        verify: False
+        headers:
+          Authorization: Bearer <% $.token_auth %>
+          Accept: application/yang-data+json
+          Content-Type: application/yang-data+json
+        body:
+          nokia-conf:user:
+          - user-name: <% $.sshUsername %>
+            password: 'NokiaNsp1!'
+            console:
+              member:
+              - administrative
+            access:
+              console: true
+            public-keys:
+              rsa:
+                rsa-key:
+                - rsa-public-key-id: 1
+                  key-value: <% $.rsakey %>
+
+    addSSHUserNFMP:
+      action: nsp.sr_cli
+      input:
+        host: <% $.host %>
+        username: <% $.env.neUsername %>
+        password: <% $.env.nePassword %>
+        cmd:
+          - configure system security user <% $.sshUsername %>
+          - access console
+          - console member "administrative"
+          - public-keys
+          - rsa
+          - rsa-key 1 create
+          - key-value <% $.rsakey %>
+          - exit all
+      publish:
+        status: <% task().result %>
+
+...

@@ -1,0 +1,71 @@
+---
+version: '2.0'
+
+neBackupCompare:
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: NE Operations
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - backupFolder
+    - backupFilenames
+
+  vars:
+    file1: <% $.backupFilenames[0].backupFilename %>
+    file2: <% $.backupFilenames[1].backupFilename %>
+
+  output:
+    result: <% $.output.html %>
+
+  output-on-error:
+    result: failed
+
+  tasks:
+    fetchBackup1:
+      action: file.read
+      input:
+        folder: /tmp/backup/<% $.backupFolder %>
+        filename: <% $.file1 %>
+      publish:
+        cfg1: <% task().result.data %>
+      on-success:
+        - fetchBackup2
+
+    fetchBackup2:
+      action: file.read
+      input:
+        folder: /tmp/backup/<% $.backupFolder %>
+        filename: <% $.file2 %>
+      publish:
+        cfg2: <% task().result.data %>
+      on-success:
+        - compare
+
+    compare:
+      action: nsp.diff
+      input:
+        mode: doc
+        fromlines: <% $.cfg1 %>
+        tolines: <% $.cfg2 %>
+        fromdesc: <% $.file1 %>
+        todesc: <% $.file2 %>
+        context: true
+        numlines: 5
+        wrapsize: 60
+        tabsize: 4
+      publish:
+        output: <% task().result %>
+      publish-on-error:
+        output: <% task().result %>
+...

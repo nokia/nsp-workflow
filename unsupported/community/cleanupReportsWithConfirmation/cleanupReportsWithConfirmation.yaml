@@ -1,0 +1,57 @@
+---
+version: '2.0'
+
+cleanupReportsWithConfirmation:
+  description: Cleanup reports from filesystem with confirmation
+  type: direct
+
+  tags:
+    - WFM Demo
+    - NSP20.6
+
+  workflow_meta:
+    author:  NOKIA DEMO
+    version: '1.1.0'
+    license: BSD-3
+    package: Reporting
+    dependencies:
+      platform:
+        nspOS: ['20.6']
+
+  input:
+    - force: false
+
+  tasks:
+    getfiles:
+      action: folder.list
+      input:
+        foldername: /tmp/reports
+        filter:
+          age: ">3600"
+          size: ">1000"
+      publish:
+        files: <% task().result %>
+      on-success:
+        - operatorPrompt: <% $.files.count()>=10 and not $.force %>
+        - cleanup: <% $.files.count()<10 or $.force %>
+
+    operatorPrompt:
+      action: nsp.user_input
+      input:
+        title: Report Deletion Confirmation
+        message: "Do you really want to delete <% $.files.count() %> reports?"
+        successAction: Confirm
+        errorAction: Cancel Request
+      publish-on-error:
+        reason: <% task().result.reason %>
+      on-success:
+        - cleanup
+
+    cleanup:
+      action: file.remove
+      input:
+        folder: /tmp/reports
+        filenames: <% $.files %>
+      publish:
+        result: <% task().result %>
+...
